@@ -108,4 +108,3 @@ class _TrendsClient:
         multiline = self._fetch(f"{_BASE}/api/widgetdata/multiline",
                                 dict(hl=self.language, tz=0, req=json.dumps(widget["request"]), token=widget["token"]))
         return explore, multiline, widget["request"].get("resolution")
-

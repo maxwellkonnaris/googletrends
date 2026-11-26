@@ -2,7 +2,6 @@ import json
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-import pandas as pd
 import pytest
 import requests
 

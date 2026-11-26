@@ -4,7 +4,6 @@ from pathlib import Path
 import random
 from importlib.metadata import version
 
-import pandas as pd
 import pytest
 
 import trendspull
