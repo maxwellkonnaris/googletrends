@@ -18,38 +18,42 @@ def _google_json(text):
     return json.loads(text[start:])
 
 
-def _single(point, field, default=None):
+def _entries(point, field, count):
     if field not in point:
-        return default
+        return [None] * count
     values = point[field]
-    if not isinstance(values, list) or len(values) != 1:
-        raise ValueError(f"Expected exactly one {field} entry per timeline observation")
-    return values[0]
+    if not isinstance(values, list) or len(values) != count:
+        raise ValueError(f"Expected {count} {field} entries per timeline observation")
+    return values
 
 
-def _timeline(text):
+def _timeline(text, keywords):
     points = _google_json(text)["default"]["timelineData"]
     if not isinstance(points, list):
         raise ValueError("Google timelineData must be a list")
     rows, times = [], []
     for point in points:
-        value = _single(point, "value")
-        if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 100 or int(value) != value:
-            raise ValueError("Expected an integer Google index in [0, 100]")
-        available, partial = _single(point, "hasData"), point.get("isPartial")
-        if any(flag is not None and type(flag) is not bool for flag in (available, partial)):
+        values = _entries(point, "value", len(keywords))
+        available = _entries(point, "hasData", len(keywords))
+        formatted = _entries(point, "formattedValue", len(keywords))
+        partial = point.get("isPartial")
+        if partial is not None and type(partial) is not bool:
             raise ValueError("Data-quality flags must be booleans when supplied")
-        formatted = _single(point, "formattedValue")
-        if formatted is not None and not isinstance(formatted, str):
-            raise ValueError("Google formattedValue must be a string")
         timestamp = point["time"]
         if type(timestamp) not in (str, int) or isinstance(timestamp, bool):
             raise ValueError("Google time must be an integer Unix timestamp")
         timestamp = int(timestamp)
         times.append(timestamp)
-        rows.append(dict(date=pd.to_datetime(timestamp, unit="s", utc=True), value=int(value),
-                         formatted_value=formatted, has_data=available, is_partial=partial,
-                         low_volume=value < 1 or (formatted is not None and formatted.strip() == "<1")))
+        for keyword, value, flag, display in zip(keywords, values, available, formatted):
+            if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 100 or int(value) != value:
+                raise ValueError("Expected an integer Google index in [0, 100]")
+            if flag is not None and type(flag) is not bool:
+                raise ValueError("Data-quality flags must be booleans when supplied")
+            if display is not None and not isinstance(display, str):
+                raise ValueError("Google formattedValue must be a string")
+            rows.append(dict(date=pd.to_datetime(timestamp, unit="s", utc=True), keyword=keyword, value=int(value),
+                             formatted_value=display, has_data=flag, is_partial=partial,
+                             low_volume=value < 1 or (display is not None and display.strip() == "<1")))
     if times != sorted(set(times)):
         raise ValueError("Google timestamps must be unique and increasing")
     return rows
@@ -97,11 +101,14 @@ class _TrendsClient:
                 self._warm()
         raise RuntimeError(f"Google request failed after {self.max_attempts} attempts: HTTP {status}, {reason}")
 
-    def timeline(self, keyword, geo, start, end, category, search_type):
-        req = dict(comparisonItem=[dict(keyword=keyword, geo=geo, time=f"{start} {end}")],
+    def timeline(self, keywords, geo, start, end, category, search_type):
+        req = dict(comparisonItem=[dict(keyword=k, geo=geo, time=f"{start} {end}") for k in keywords],
                    category=category, property=_SEARCH_TYPES[search_type])
         explore = self._fetch(f"{_BASE}/api/explore", dict(hl=self.language, tz=0, req=json.dumps(req)))
-        widget = next((w for w in _google_json(explore)["widgets"] if w.get("id") == "TIMESERIES"), None)
+        definition = _google_json(explore)
+        if [item["keyword"] for item in definition["keywords"]] != keywords:
+            raise ValueError("Google returned different keywords or keyword order")
+        widget = next((w for w in definition["widgets"] if w.get("id") == "TIMESERIES"), None)
         if widget is None:
             raise ValueError("Google returned no TIMESERIES widget")
         time.sleep(random.uniform(2, 5))

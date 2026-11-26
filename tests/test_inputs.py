@@ -6,6 +6,7 @@ from trendspull import pull_trends
 @pytest.mark.parametrize("changes", [
     {"keywords": None}, {"keywords": []}, {"keywords": ""}, {"keywords": "  "},
     {"keywords": ["fire", "fire"]}, {"keywords": ["fire", 3]}, {"keywords": {"fire"}},
+    {"keywords": ["a", "b", "c", "d", "e", "f"]},
     {"start": "today"}, {"start": "2021-1-01"}, {"start": "2021-02-30"},
     {"end": None}, {"end": "2020-01-01"},
     {"geo": []}, {"geo": ["US", "US"]}, {"geo": "../../outside"}, {"geo": "us-ca"},
@@ -31,7 +32,7 @@ def test_invalid_inputs_fail_before_network_or_files(changes, fake_client, tmp_p
 def test_keyword_is_sent_as_one_exact_string(keyword, fake_client):
     _, client = fake_client
     pull_trends(keyword, "2021-01-01", "2021-12-31")
-    assert client.timeline.call_args.args[0] == keyword
+    assert client.timeline.call_args.args[0] == [keyword]
     assert client.timeline.call_count == 1
 
 
@@ -40,4 +41,4 @@ def test_parameters_reach_client_unchanged(fake_client):
     pull_trends("smoke", "2021-01-01", "2021-12-31", geo="US-CA", search_type="news", category=45,
                 language="fr-FR", timeout=12, max_attempts=2)
     factory.assert_called_once_with("fr-FR", 2, 12)
-    client.timeline.assert_called_once_with("smoke", "US-CA", "2021-01-01", "2021-12-31", 45, "news")
+    client.timeline.assert_called_once_with(["smoke"], "US-CA", "2021-01-01", "2021-12-31", 45, "news")

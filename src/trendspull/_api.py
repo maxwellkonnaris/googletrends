@@ -50,6 +50,8 @@ def _fixed_date(value, name):
 
 def _validate(keywords, start, end, geo, category, search_type, language, delay, max_attempts, timeout):
     keywords, geos = _strings(keywords, "keywords"), _strings(geo, "geo", allow_empty=True)
+    if len(keywords) > 5:
+        raise ValueError("Google Trends comparisons support at most 5 keywords; separate batches would have different scales")
     if _fixed_date(start, "start") > _fixed_date(end, "end"):
         raise ValueError("start must be on or before end")
     if any(not re.fullmatch(r"(?:[A-Z]{2}(?:-[A-Z0-9]+)*)?", g) for g in geos):
@@ -112,7 +114,7 @@ def pull_trends(
     Parameters
     ----------
     keywords : str or list/tuple of str
-        Search strings or Google Topic IDs. Each keyword/region is requested separately.
+        One to five search strings or Google Topic IDs, compared together per geography.
     start, end : str
         Fixed YYYY-MM-DD dates. Google chooses the time resolution and bucket labels.
     geo : str or list/tuple of str
@@ -127,7 +129,7 @@ def pull_trends(
         Save successful response texts, checksums and a manifest in a new run subfolder.
         No files are written by default. Existing runs are not overwritten or reused.
     delay : pair of float
-        Random pause range in seconds between series, default (8, 20).
+        Random pause range in seconds between geography comparisons, default (8, 20).
     max_attempts : int
         Total attempts per chart request, default 3. Permanent HTTP errors fail immediately.
     timeout : float
@@ -137,7 +139,8 @@ def pull_trends(
     -------
     pandas.DataFrame
         One row per returned timestamp, keyword and geography. Values remain on Google's
-        separately normalized 0-100 scale. Quality flags, zeros and partial periods are
+        shared 0-100 comparison scale within each geography request. Separate geographies
+        and calls have separate scales. Quality flags, zeros and partial periods are
         retained; missing provider flags remain pd.NA. No alignment or imputation occurs.
         All request settings and retrieval timestamps are included in columns; additional
         run/request metadata is in data.attrs['trendspull']. CSV exports can be read by R.
@@ -156,6 +159,7 @@ def pull_trends(
                     settings=dict(keywords=keywords, start=start, end=end, geo=geos, category=category,
                                   search_type=search_type, language=language, tz=0,
                                   delay=list(delay), max_attempts=max_attempts, timeout=timeout),
+                    normalization="shared keyword scale within each geography request",
                     runtime=dict(python=platform.python_version(), pandas=pd.__version__, requests=requests.__version__),
                     requests=[])
     run_dir = None
@@ -168,30 +172,29 @@ def pull_trends(
     records, client, current = [], None, None
     try:
         client = _TrendsClient(language, max_attempts, timeout)
-        jobs = [(g, k) for g in geos for k in keywords]
-        for index, (region, keyword) in enumerate(jobs):
-            current = dict(request_id=uuid.uuid4().hex, keyword=keyword, geo=region,
+        for index, region in enumerate(geos):
+            current = dict(request_id=uuid.uuid4().hex, keywords=list(keywords), geo=region,
                            requested_at=_now(), status="running")
             manifest["requests"].append(current)
-            explore, multiline, resolution = client.timeline(keyword, region, start, end, category, search_type)
+            explore, multiline, resolution = client.timeline(keywords, region, start, end, category, search_type)
             retrieved_at = _now()
             if run_dir is not None:
                 filename = f"{current['request_id']}.json"
                 current["file"] = filename
                 current["sha256"] = _atomic(run_dir / filename, dict(explore=explore, multiline=multiline))
-            rows = _timeline(multiline)
+            rows = _timeline(multiline, keywords)
             current.update(status="ok" if rows else "empty", row_count=len(rows),
                            retrieved_at=retrieved_at, resolution=resolution)
             for row in rows:
-                records.append(dict(row, keyword=keyword, geo=region, start=start, end=end, category=category,
+                records.append(dict(row, geo=region, start=start, end=end, category=category,
                                     search_type=search_type, language=language, retrieved_at=retrieved_at,
                                     request_id=current["request_id"]))
             if not rows:
-                warnings.warn(f"Google returned an empty timeline for {keyword!r} in {region or 'worldwide'}",
+                warnings.warn(f"Google returned an empty timeline for {keywords!r} in {region or 'worldwide'}",
                               RuntimeWarning, stacklevel=2)
             if run_dir is not None:
                 _atomic(run_dir / "manifest.json", manifest)
-            if index + 1 < len(jobs):
+            if index + 1 < len(geos):
                 time.sleep(random.uniform(*delay))
         data = _table(records)
         manifest.update(status="complete", completed_at=_now(), row_count=len(data))
@@ -205,7 +208,7 @@ def pull_trends(
             except OSError as archive_error:
                 _LOG.warning("Could not record collection failure in archive: %s", archive_error)
         if isinstance(error, Exception):
-            context = f" for {current['keyword']!r} in {current['geo'] or 'worldwide'}" if current else ""
+            context = f" for {current['keywords']!r} in {current['geo'] or 'worldwide'}" if current else ""
             raise RuntimeError(f"Google Trends collection failed{context}: {error}") from error
         raise
     finally:
@@ -214,5 +217,5 @@ def pull_trends(
     if run_dir is not None:
         _atomic(run_dir / "manifest.json", manifest)
     data.attrs["trendspull"] = dict(manifest, archive=str(run_dir.resolve()) if run_dir else None,
-                                    normalization="separate keyword/geography requests", timezone="UTC")
+                                    timezone="UTC")
     return data

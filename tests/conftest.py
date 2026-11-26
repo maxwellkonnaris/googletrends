@@ -17,8 +17,10 @@ def block_network(monkeypatch):
 def response(values=(0, 2, 100), start=1609632000, step=604800, **overrides):
     rows = []
     for i, value in enumerate(values):
-        row = dict(time=str(start + i * step), value=[value], formattedValue=["<1" if value == 0 else str(value)],
-                   hasData=[True], isPartial=False)
+        entries = value if isinstance(value, list) else [value]
+        row = dict(time=str(start + i * step), value=entries,
+                   formattedValue=["<1" if v == 0 else str(v) for v in entries],
+                   hasData=[True] * len(entries), isPartial=False)
         row.update(overrides)
         rows.append(row)
     return ")]}'\n" + json.dumps({"default": {"timelineData": rows}})
