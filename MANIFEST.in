@@ -1,2 +1,3 @@
 recursive-include docs *.md *.Rmd
 recursive-include tests *.py
+recursive-include docs/figures *.svg

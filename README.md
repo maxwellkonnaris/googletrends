@@ -1,45 +1,34 @@
-Collect Google Trends interest over time for Python or [R](docs/r-usage.Rmd).
+Collect Google Trends data in Python or [R](docs/r-usage.Rmd).
 
-## Installation
+![Complete Google Trends example: wildfire, smoke, air quality, asthma, inhaler and cough in California, shown on a shared calibrated scale and in detailed panels.](docs/figures/data-overview.svg)
 
-Requires Python 3.9+ and GitHub SSH access while this repository is private.
+*California · requested 2021–2025 · six terms · 262 weekly dates. Full timelines,
+calibrated to the wildfire peak.*
+
+## Install
+
+Python 3.9+:
 
 ```bash
-python -m pip install "git+ssh://git@github.com/maxwellkonnaris/trendspull.git@main"
+python -m pip install "git+https://github.com/maxwellkonnaris/googletrends.git@main"
 ```
 
-## Example
+## Pull
 
 ```python
 from trendspull import pull_trends
 
 data = pull_trends(
-    ["wildfire", "smoke"],
+    ["wildfire", "smoke", "air quality", "asthma", "inhaler", "cough"],
     start="2021-01-01", end="2025-12-31", geo="US-CA",
-    min_gap_days=28,  # Change this value, or use None to keep every date.
+    min_gap_days=None,  # Keep all dates; use e.g. 28 to space them.
 )
-data[["date", "keyword", "value"]].head()
+data[["date", "keyword", "calibrated_value"]].head()
 data.to_csv("trends.csv", index=False)
 ```
 
-Returns one row per timestamp, keyword and region. Read the CSV in R with
-`read.csv("trends.csv")`.
-
-Up to five terms share Google's 0–100 scale. More than five automatically use
-[G-TAB calibration](https://doi.org/10.1145/3340531.3412075):
-
-```python
-data = pull_trends(
-    ["wildfire", "smoke", "air quality", "asthma", "cough", "inhaler"],
-    "2021-01-01", "2025-12-31", geo="US-CA", min_gap_days=28,
-)
-data[["date", "keyword", "calibrated_value"]].head()
-```
-
-`value` always preserves Google's raw index. `calibrated_value` uses the first
-term's period peak as 1; rounding bounds and provenance are also returned.
-Calibration fails if reliable anchor connections cannot be found. Values describe
-relative search interest, not counts; regions retain separate scales.
-Use `min_gap_days=28` to retain dates at least 28 days apart; this does not guarantee
-uncorrelated observations. All dates are kept by default.
-See [options and output fields](docs/data-contract.md) for details.
+Returns a pandas DataFrame: one row per date, term and region. Up to five terms
+share Google's 0–100 scale; larger sets automatically use G-TAB calibration.
+`value` preserves the raw index; `calibrated_value` uses the first term's peak as 1.
+Values describe relative search interest, not counts or disease incidence.
+Date spacing does not guarantee independence. See [options and output](docs/data-contract.md).

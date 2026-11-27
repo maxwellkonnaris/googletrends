@@ -4,15 +4,14 @@ output: html_document
 ---
 
 R calls the same Python collector through `reticulate`. The result is a regular
-`data.frame`; no CSV transfer is required. Python 3.9+ and GitHub SSH access are
-required while the repository is private.
+`data.frame`; no CSV transfer is required. Python 3.9+ is required.
 
 Install once, in a fresh R session (Linux/macOS virtualenv setup):
 
 ```{r install, eval=FALSE}
 install.packages("reticulate")
 reticulate::py_install(
-  "git+ssh://git@github.com/maxwellkonnaris/trendspull.git@main",
+  "git+https://github.com/maxwellkonnaris/googletrends.git@main",
   envname = "r-trendspull", method = "virtualenv", pip = TRUE
 )
 ```
