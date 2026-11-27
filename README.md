@@ -29,8 +29,10 @@ data.to_csv("trends.csv", index=False)
 ```
 
 Returns a pandas DataFrame: one row per date, term and region. Up to five terms
-share Google's 0–100 scale; larger sets automatically use G-TAB calibration.
+share Google's 0–100 scale; larger sets automatically use G-TAB calibration.[^gtab]
 `value` preserves the raw index; `calibrated_value` is relative to the first term's
 peak (1), so other terms can exceed 1.
 Values describe relative search interest, not counts or disease incidence.
 Date spacing does not guarantee independence. See [options and output](docs/data-contract.md).
+
+[^gtab]: Robert West (2020). [*Calibration of Google Trends Time Series*](https://doi.org/10.1145/3340531.3412075). CIKM, 2257–2260.
