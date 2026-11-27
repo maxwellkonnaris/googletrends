@@ -27,8 +27,21 @@ data.to_csv("trends.csv", index=False)
 Returns one row per timestamp, keyword and region. Read the CSV in R with
 `read.csv("trends.csv")`.
 
-Up to five keywords share a 0–100 scale within each region and request. Values are
-relative search interest, not search counts. Separate requests have separate scales.
+Up to five terms share Google's 0–100 scale. More than five automatically use
+[G-TAB calibration](https://doi.org/10.1145/3340531.3412075):
+
+```python
+data = pull_trends(
+    ["wildfire", "smoke", "air quality", "asthma", "cough", "inhaler"],
+    "2021-01-01", "2025-12-31", geo="US-CA", min_gap_days=28,
+)
+data[["date", "keyword", "calibrated_value"]].head()
+```
+
+`value` always preserves Google's raw index. `calibrated_value` uses the first
+term's period peak as 1; rounding bounds and provenance are also returned.
+Calibration fails if reliable anchor connections cannot be found. Values describe
+relative search interest, not counts; regions retain separate scales.
 Use `min_gap_days=28` to retain dates at least 28 days apart; this does not guarantee
 uncorrelated observations. All dates are kept by default.
 See [options and output fields](docs/data-contract.md) for details.
