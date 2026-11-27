@@ -1,19 +1,21 @@
 # Working on trendspull
 
-Preserve the CLI names, study config, and output paths unless a change is justified.
-Keep Google website responses immutable after collection; verify hashes and study
-specifications before assembly. Preserve low-volume, unavailable, and partial flags.
-Do not infer raw censoring from averaged, rescaled indices.
+This is a collection-only Python package. Its sole public function is pull_trends.
+Preserve provider values, timestamps, zeros, displayed values and quality flags.
+Do not add filtering, imputation, normalization, averaging or statistical analyses.
+Do not describe the package as reproducing a published study until that study's
+request, scaling and data conventions have been verified against its sources.
 
-Use offline synthetic fixtures for tests: `python -m pytest -q`. Keep tests independent
-of Google access. Do not run the full 84-series collection or upload research data
-as part of a code change. Run one bounded live query only when access testing is in scope.
+Keep production code small and readable under src/trendspull. Test the installed
+package, not only imports from the checkout. Use python -m pytest -q with synthetic
+responses and blocked network access; test malicious/malformed inputs, empty data,
+rate limits, retries, interrupted requests, preservation and archive failure paths.
 
-Distinguish sample moments, sensitivity parameters, population claims, and causal
-effects. Do not claim independent daily Google samples without evidence. Log-floor
-choices and complete-date exclusions are analysis assumptions, not known truths.
+Keep new public API/output choices provisional until the user reviews their meaning.
+Do not publish a release or upload to PyPI without explicit user approval.
+Preserve the private repository and use reviewable changes on codex/ branches.
 
-Keep raw data and generated analysis outputs out of Git. Use Git for source,
-configuration, tests, CI, and documentation. Add DVC, containers, or MLflow only
-when the actual data scale, portability, or experiment tracking need justifies them.
-Do not delete user files, use sudo, force-push, or commit credentials.
+Git tracks source, package metadata, tests, CI and documentation. Research data,
+archives, logs, builds and credentials stay outside Git. Add DVC, containers or
+MLflow only when a concrete need exists. Do not use sudo, force-push or delete
+unrelated user files.

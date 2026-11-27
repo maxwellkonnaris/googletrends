@@ -10,3 +10,8 @@ results/
 logs/
 *.zip
 *.tmp
+build/
+dist/
+*.egg-info/
+*.csv
+*.parquet
