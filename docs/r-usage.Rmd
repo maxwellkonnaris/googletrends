@@ -1,0 +1,68 @@
+---
+title: "Using trendspull from R"
+output: html_document
+---
+
+R calls the same Python collector through `reticulate`. The result is a regular
+`data.frame`; no CSV transfer is required. Python 3.9+ and GitHub SSH access are
+required while the repository is private.
+
+Install once, in a fresh R session (Linux/macOS virtualenv setup):
+
+```{r install, eval=FALSE}
+install.packages("reticulate")
+reticulate::py_install(
+  "git+ssh://git@github.com/maxwellkonnaris/trendspull.git@main",
+  envname = "r-trendspull", method = "virtualenv", pip = TRUE
+)
+```
+
+Then select that environment and collect data:
+
+```{r collect, eval=FALSE}
+library(reticulate)
+use_virtualenv("r-trendspull", required = TRUE)
+trends <- import("trendspull")
+
+data <- trends$pull_trends(
+  c("wildfire", "smoke"),
+  start = "2021-01-01", end = "2025-12-31", geo = "US-CA",
+  min_gap_days = 28L
+)
+head(data[c("date", "keyword", "value")])
+```
+
+`28L` is an R integer: this example keeps dates at least 28 elapsed days apart,
+anchored at the first timestamp Google returns. Omit `min_gap_days` to keep all
+dates. All keywords at a selected date stay together and retain their shared Google
+scale. The value 28 is illustrative; it is not a promise of zero autocorrelation
+or independence. Time-series dependence needs assessment in the later analysis.
+
+Zeros and missing quality flags are preserved. Dates are POSIXct timestamps with
+the same instants as Python's UTC timestamps. R can display them in local time;
+use `format(data$date, tz = "UTC")` when checking the UTC labels.
+
+To save the result:
+
+```{r export, eval=FALSE}
+write.csv(data, "trends.csv", row.names = FALSE, na = "")
+```
+
+For full provenance, pass `archive = "data"` to save the complete raw response and
+manifest, including dates omitted from the returned table. Alternatively, preserve
+the Python metadata in an R attribute explicitly:
+
+```{r metadata, eval=FALSE}
+trends <- import("trendspull", convert = FALSE)
+result <- trends$pull_trends(
+  c("wildfire", "smoke"), "2021-01-01", "2025-12-31", geo = "US-CA"
+)
+data <- py_to_r(result)
+attr(data, "trendspull") <- py_to_r(result$attrs$get("trendspull"))
+```
+
+If Python has already been initialized in the wrong environment, restart R before
+calling `use_virtualenv()`. Integer-only options such as `category`, `max_attempts`
+and `min_gap_days` need the R `L` suffix when supplied, for example `category = 0L`.
+On Windows, install into a Conda environment with `py_install(method = "conda", ...,
+pip = TRUE)` and select it with `use_condaenv()` instead of `use_virtualenv()`.

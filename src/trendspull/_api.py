@@ -48,7 +48,7 @@ def _fixed_date(value, name):
         raise ValueError(f"{name} must be a valid YYYY-MM-DD date") from None
 
 
-def _validate(keywords, start, end, geo, category, search_type, language, delay, max_attempts, timeout):
+def _validate(keywords, start, end, geo, category, search_type, language, delay, max_attempts, timeout, min_gap_days):
     keywords, geos = _strings(keywords, "keywords"), _strings(geo, "geo", allow_empty=True)
     if len(keywords) > 5:
         raise ValueError("Google Trends comparisons support at most 5 keywords; separate batches would have different scales")
@@ -70,6 +70,8 @@ def _validate(keywords, start, end, geo, category, search_type, language, delay,
         raise ValueError("max_attempts must be a positive integer")
     if type(timeout) not in (int, float) or not math.isfinite(timeout) or timeout <= 0:
         raise ValueError("timeout must be finite and positive")
+    if min_gap_days is not None and (type(min_gap_days) is not int or min_gap_days < 1):
+        raise ValueError("min_gap_days must be None or a positive integer")
     return keywords, geos
 
 
@@ -95,6 +97,18 @@ def _table(records):
     return data
 
 
+def _space_dates(rows, min_gap_days):
+    if min_gap_days is None:
+        return rows
+    selected, previous = [], None
+    for row in rows:
+        timestamp = row["date"]
+        if previous is None or timestamp == previous or (timestamp - previous).total_seconds() >= min_gap_days * 86400:
+            selected.append(row)
+            previous = timestamp
+    return selected
+
+
 def pull_trends(
     keywords: Union[str, Sequence[str]],
     start: str,
@@ -104,6 +118,7 @@ def pull_trends(
     search_type: str = "web",
     category: int = 0,
     language: str = "en-US",
+    min_gap_days: Optional[int] = None,
     archive: Optional[Union[str, Path]] = None,
     delay: Tuple[float, float] = (8, 20),
     max_attempts: int = 3,
@@ -125,6 +140,11 @@ def pull_trends(
         Google category ID; 0 means all categories.
     language : str
         Interface language, default 'en-US'; this does not restrict searches by language.
+    min_gap_days : int, optional
+        Minimum elapsed days between retained timestamps, independently per geography.
+        Keep the first returned timestamp, then the next at least this many days later.
+        All keywords at each selected timestamp stay together. Default None keeps all
+        dates. Selection does not rescale values or guarantee uncorrelated observations.
     archive : str or pathlib.Path, optional
         Save successful response texts, checksums and a manifest in a new run subfolder.
         No files are written by default. Existing runs are not overwritten or reused.
@@ -140,8 +160,8 @@ def pull_trends(
     pandas.DataFrame
         One row per returned timestamp, keyword and geography. Values remain on Google's
         shared 0-100 comparison scale within each geography request. Separate geographies
-        and calls have separate scales. Quality flags, zeros and partial periods are
-        retained; missing provider flags remain pd.NA. No alignment or imputation occurs.
+        and calls have separate scales. At selected dates, quality flags, zeros and
+        partial periods are retained; missing flags remain pd.NA. No alignment or imputation occurs.
         All request settings and retrieval timestamps are included in columns; additional
         run/request metadata is in data.attrs['trendspull']. CSV exports can be read by R.
 
@@ -154,11 +174,12 @@ def pull_trends(
         archive retains completed responses and records the failure.
     """
     keywords, geos = _validate(keywords, start, end, geo, category, search_type,
-                               language, delay, max_attempts, timeout)
+                               language, delay, max_attempts, timeout, min_gap_days)
     manifest = dict(version=_VERSION, source="Google Trends website", started_at=_now(), status="running",
                     settings=dict(keywords=keywords, start=start, end=end, geo=geos, category=category,
                                   search_type=search_type, language=language, tz=0,
-                                  delay=list(delay), max_attempts=max_attempts, timeout=timeout),
+                                  delay=list(delay), max_attempts=max_attempts, timeout=timeout,
+                                  min_gap_days=min_gap_days),
                     normalization="shared keyword scale within each geography request",
                     runtime=dict(python=platform.python_version(), pandas=pd.__version__, requests=requests.__version__),
                     requests=[])
@@ -183,8 +204,10 @@ def pull_trends(
                 current["file"] = filename
                 current["sha256"] = _atomic(run_dir / filename, dict(explore=explore, multiline=multiline))
             rows = _timeline(multiline, keywords)
+            provider_row_count = len(rows)
+            rows = _space_dates(rows, min_gap_days)
             current.update(status="ok" if rows else "empty", row_count=len(rows),
-                           retrieved_at=retrieved_at, resolution=resolution)
+                           provider_row_count=provider_row_count, retrieved_at=retrieved_at, resolution=resolution)
             for row in rows:
                 records.append(dict(row, geo=region, start=start, end=end, category=category,
                                     search_type=search_type, language=language, retrieved_at=retrieved_at,

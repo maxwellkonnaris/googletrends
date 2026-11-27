@@ -17,6 +17,9 @@ from trendspull import pull_trends
     {"delay": [0, float("inf")]}, {"delay": [0, True]},
     {"max_attempts": 0}, {"max_attempts": True}, {"max_attempts": 1.5},
     {"timeout": 0}, {"timeout": float("nan")}, {"timeout": float("inf")}, {"timeout": True},
+    {"min_gap_days": 0}, {"min_gap_days": -1}, {"min_gap_days": True},
+    {"min_gap_days": 1.5}, {"min_gap_days": "28"}, {"min_gap_days": float("nan")},
+    {"min_gap_days": float("inf")}, {"min_gap_days": []},
 ])
 def test_invalid_inputs_fail_before_network_or_files(changes, fake_client, tmp_path):
     factory, _ = fake_client

@@ -8,7 +8,7 @@ This is not a claim of matching a particular published wildfire study.
 ## Values and request settings
 
 `pull_trends(keywords, start, end, *, geo="", search_type="web", category=0,
-language="en-US", archive=None, delay=(8,20), max_attempts=3, timeout=60)`
+language="en-US", min_gap_days=None, archive=None, delay=(8,20), max_attempts=3, timeout=60)`
 returns a pandas DataFrame. One to five keywords are requested together, preserving
 their input order and sharing Google's comparison scale within each geography.
 One request ID identifies all keyword rows from that comparison. Multiple geographies
@@ -30,9 +30,34 @@ and timestamps are returned in UTC. Actual period timestamps are preserved, incl
 boundary buckets outside the nominal date labels. Hourly values retain their hours.
 
 The observations are [Google's sampled and normalized indices](https://support.google.com/trends/answer/4365533).
-No logarithms, replacements, filtering, smoothing, alignment or other data modification
-is performed. A zero can indicate low volume, not a known absence of searches.
+No logarithms, replacements, smoothing, alignment or rescaling is performed.
+All provider dates are kept unless the caller requests the explicit date selection
+described below. A zero can indicate low volume, not a known absence of searches.
 Unknown provider flags remain missing, rather than being replaced with true or false.
+
+## Optional time spacing
+
+`min_gap_days=28` retains the first provider timestamp in each geography, then the
+earliest timestamp at least 28 elapsed days after the previously retained timestamp.
+All keywords at a retained timestamp stay together. Selection uses actual UTC time
+differences, not row numbers; 28 is an example, not a scientifically chosen default.
+`None` keeps every provider date. A supplied gap must be a positive integer.
+
+Spacing is applied after collecting and validating the entire joint timeline. It does
+not make separate Google requests for selected dates, interpolate, aggregate, or rescale
+the values. Thus the returned subset need not contain the original chart's peak of
+100. Optional archives retain the full unselected response. Settings record the gap;
+each request records `provider_row_count` before selection and `row_count` afterward.
+The anchor is the first returned timestamp, which can precede the requested start
+because Google labels whole buckets.
+
+The target of this option is a minimum timestamp separation, not zero autocorrelation.
+For a process whose dependence decays with lag, larger gaps may reduce correlation,
+but trends, seasonality and persistent events can preserve dependence at long lags.
+Even zero correlation would not generally establish independence. A suitable gap
+cannot be determined from the request settings alone. Assess dependence in the
+downstream analysis; the collector neither estimates autocorrelation nor chooses a gap.
+See [NIST's autocorrelation reference](https://www.itl.nist.gov/div898/handbook/eda/section3/eda35c.htm).
 
 ## Current draft table
 
@@ -51,6 +76,11 @@ Unknown provider flags remain missing, rather than being replaced with true or f
 Additional run metadata, normalization scope, keyword order and per-request observation
 row counts are in `data.attrs["trendspull"]` and the optional archive manifest.
 CSV preserves the columns but not pandas attrs; an archive preserves full metadata.
+Python can also be called directly from R using reticulate, returning a regular R
+data.frame; see the [R walkthrough](r-usage.Rmd). Python remains the collection engine.
+R conversion preserves values, missing flags and timestamp instants. R may display
+times in its local timezone, and pandas attrs do not automatically become R attributes.
+Use the optional archive for complete metadata or copy attrs as shown in the walkthrough.
 This is an ordinary DataFrame/CSV, not a custom binary file type. The precise table
 layout and reference-study compatibility remain open for user review.
 
@@ -63,7 +93,8 @@ failure and interruption.
 
 A valid empty timeline contributes zero rows and emits a warning; request metadata
 records its empty status. A single returned observation is valid. Dates are not
-intersected across series, and unavailable or partial observations are not discarded.
+intersected across series; unavailable or partial observations at selected dates are
+not discarded based on their flags.
 
 `max_attempts` is a per-chart-request bound, not a total wall-clock limit. Retries apply
 to connection errors, HTTP 429 and server failures. Other HTTP errors fail immediately.
