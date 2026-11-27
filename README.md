@@ -1,5 +1,3 @@
-# trendspull
-
 Collect Google Trends interest over time for Python or [R](docs/r-usage.Rmd).
 
 ## Installation
