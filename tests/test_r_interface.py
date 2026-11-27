@@ -59,6 +59,13 @@ for (g in unique(x$geo)) {
 }
 if (args[2]=="unknown") {
   stopifnot(all(is.na(x$has_data)),all(is.na(x$is_partial)))
+  calibrated <- trends$pull_trends(c("wildfire","smoke"),"2021-01-01","2021-12-31",
+                                   min_gap_days=28L, calibration="gtab")
+  stopifnot(is.numeric(calibrated$calibrated_value),
+            isTRUE(all.equal(calibrated$calibrated_value, calibrated$value / 100)),
+            all(calibrated$calibrated_lower <= calibrated$calibrated_value),
+            all(calibrated$calibrated_upper >= calibrated$calibrated_value),
+            all(calibrated$calibration_reference=="wildfire"))
 } else {
   stopifnot(identical(x$has_data,rep(c(TRUE,FALSE),6)),all(x$is_partial))
 }

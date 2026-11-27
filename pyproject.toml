@@ -19,8 +19,8 @@ classifiers = [
 test = ["pytest>=7,<10"]
 
 [project.urls]
-Repository = "https://github.com/maxwellkonnaris/trendspull"
-Issues = "https://github.com/maxwellkonnaris/trendspull/issues"
+Repository = "https://github.com/maxwellkonnaris/googletrends"
+Issues = "https://github.com/maxwellkonnaris/googletrends/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

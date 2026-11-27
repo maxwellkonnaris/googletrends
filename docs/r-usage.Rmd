@@ -4,15 +4,14 @@ output: html_document
 ---
 
 R calls the same Python collector through `reticulate`. The result is a regular
-`data.frame`; no CSV transfer is required. Python 3.9+ and GitHub SSH access are
-required while the repository is private.
+`data.frame`; no CSV transfer is required. Python 3.9+ is required.
 
 Install once, in a fresh R session (Linux/macOS virtualenv setup):
 
 ```{r install, eval=FALSE}
 install.packages("reticulate")
 reticulate::py_install(
-  "git+ssh://git@github.com/maxwellkonnaris/trendspull.git@main",
+  "git+https://github.com/maxwellkonnaris/googletrends.git@main",
   envname = "r-trendspull", method = "virtualenv", pip = TRUE
 )
 ```
@@ -31,6 +30,22 @@ data <- trends$pull_trends(
 )
 head(data[c("date", "keyword", "value")])
 ```
+
+More than five keywords automatically use G-TAB calibration. The same R call
+then includes `calibrated_value`, with the first term's usable period peak defined
+as 1, plus conditional rounding bounds. `value` still contains the original Google
+index. For example:
+
+```{r calibrated, eval=FALSE}
+data <- trends$pull_trends(
+  c("wildfire", "smoke", "air quality", "asthma", "cough", "inhaler"),
+  "2021-01-01", "2025-12-31", geo = "US-CA", min_gap_days = 28L
+)
+head(data[c("date", "keyword", "calibrated_value")])
+```
+
+See the [calibration contract](data-contract.md#gtab-calibration) for anchor-bank
+failure conditions and uncertainty limits; bounds do not include sampling error.
 
 `28L` is an R integer: this example keeps dates at least 28 elapsed days apart,
 anchored at the first timestamp Google returns. Omit `min_gap_days` to keep all
@@ -64,5 +79,6 @@ attr(data, "trendspull") <- py_to_r(result$attrs$get("trendspull"))
 If Python has already been initialized in the wrong environment, restart R before
 calling `use_virtualenv()`. Integer-only options such as `category`, `max_attempts`
 and `min_gap_days` need the R `L` suffix when supplied, for example `category = 0L`.
+The calibration options `min_anchor_peak` and `max_comparisons` also require integers.
 On Windows, install into a Conda environment with `py_install(method = "conda", ...,
 pip = TRUE)` and select it with `use_condaenv()` instead of `use_virtualenv()`.
