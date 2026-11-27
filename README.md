@@ -18,6 +18,7 @@ from trendspull import pull_trends
 data = pull_trends(
     ["wildfire", "smoke"],
     start="2021-01-01", end="2025-12-31", geo="US-CA",
+    min_gap_days=28,  # Change this value, or use None to keep every date.
 )
 data[["date", "keyword", "value"]].head()
 data.to_csv("trends.csv", index=False)
