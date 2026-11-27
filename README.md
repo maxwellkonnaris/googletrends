@@ -94,7 +94,7 @@ rounding and suppression affect its estimation from observed indices.
 
 1. Google. *FAQ about Google Trends data.* Google Trends Help. <https://support.google.com/trends/answer/4365533>
 2. West, R. (2020). Calibration of Google Trends time series. *Proceedings of the 29th ACM International Conference on Information and Knowledge Management (CIKM '20).* <https://arxiv.org/abs/2007.13861>
-3. Nixon, M. P., McGovern, K. C., Letourneau, J., David, L. A., Lazar, N. A., Mukherjee, S., & Silverman, J. D. Scale reliant inference. <https://arxiv.org/abs/2201.03616>
+3. Nixon, M. P., McGovern, K. C., Konnaris, M. A., Letourneau, J., David, L. A., Lazar, N. A., Mukherjee, S., & Silverman, J. D. (2026). Scale reliant inference. *The Annals of Applied Statistics*, 20(3), 2125–2147. <https://doi.org/10.1214/26-AOAS2230>
 4. Konnaris, M. A., Lazar, N. A., & Silverman, J. D. Scale reliant covariance estimation: with applications in genomic survey data. Manuscript in preparation.
 
 [^gtab]: Robert West (2020). [*Calibration of Google Trends Time Series*](https://doi.org/10.1145/3340531.3412075). CIKM, 2257–2260.
