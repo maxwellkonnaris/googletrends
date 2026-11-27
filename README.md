@@ -1,6 +1,6 @@
 # trendspull
 
-Collect Google Trends interest over time as a pandas DataFrame.
+Collect Google Trends interest over time for Python or [R](docs/r-usage.Rmd).
 
 ## Installation
 
@@ -28,4 +28,6 @@ Returns one row per timestamp, keyword and region. Read the CSV in R with
 
 Up to five keywords share a 0–100 scale within each region and request. Values are
 relative search interest, not search counts. Separate requests have separate scales.
+Use `min_gap_days=28` to retain dates at least 28 days apart; this does not guarantee
+uncorrelated observations. All dates are kept by default.
 See [options and output fields](docs/data-contract.md) for details.

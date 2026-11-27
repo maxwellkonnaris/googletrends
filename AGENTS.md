@@ -2,7 +2,10 @@
 
 This is a collection-only Python package. Its sole public function is pull_trends.
 Preserve provider values, timestamps, zeros, displayed values and quality flags.
-Do not add filtering, imputation, normalization, averaging or statistical analyses.
+Only apply date selection when the user supplies min_gap_days; keep all dates by default.
+Archive the full provider response before selection. Do not add other filtering,
+imputation, normalization, averaging or statistical analyses. Spacing is not a guarantee
+of uncorrelated or independent observations.
 Do not describe the package as reproducing a published study until that study's
 request, scaling and data conventions have been verified against its sources.
 
