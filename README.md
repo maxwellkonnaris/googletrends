@@ -7,7 +7,7 @@ Collect Google Trends interest over time as a pandas DataFrame.
 Requires Python 3.9+ and GitHub SSH access while this repository is private.
 
 ```bash
-python -m pip install "git+ssh://git@github.com/maxwellkonnaris/trendspull.git@codex/collection-package"
+python -m pip install "git+ssh://git@github.com/maxwellkonnaris/trendspull.git@main"
 ```
 
 ## Example
