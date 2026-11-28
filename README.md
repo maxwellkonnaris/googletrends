@@ -8,23 +8,23 @@ interest across all terms and dates, not each term's own peak.*
 
 ## Install
 
-Python 3.11+ · [MIT license](LICENSE). Registry publication is pending; these commands install a fixed source snapshot.
+Python 3.11+ · [MIT license](LICENSE).
 
 **Python** (includes the optional plotting dependency):
 
 ```bash
-python -m pip install "trendspull[plot] @ git+https://github.com/maxwellkonnaris/googletrends.git@4cbb2d3862e15dd991f6c615a020272624a9838d"
+python -m pip install "trendspull[plot]==0.1.0"
 ```
 
 **R** (R 4.1+ and Git):
 
 ```r
 install.packages("remotes")
-remotes::install_github("maxwellkonnaris/googletrends@4cbb2d3862e15dd991f6c615a020272624a9838d", subdir = "r-package")
+remotes::install_github("maxwellkonnaris/googletrends@v0.1.0", subdir = "r-package")
 ```
 
 The R package runs natively without Python. Both packages use the same
-collection and calibration rules.
+collection and calibration rules. CRAN publication is pending.
 
 ## Pull
 
