@@ -3,20 +3,35 @@
 #' Run once in a fresh R session. Installs the pinned Python backend into a
 #' dedicated environment and selects it for this session. Requires Python 3.11+
 #' and network access; loading the R package never installs software.
+#' Unset `RETICULATE_PYTHON` before setup to allow selection of the new environment.
 #' @param envname Name or path of the Python environment.
 #' @param method Environment type: `"auto"`, `"virtualenv"` or `"conda"`.
+#' @param python Optional path to Python 3.11+ for creating a virtual environment.
+#'   By default, uses `python3` or `python` on PATH. Requires venv and pip support.
 #' @return The environment name, invisibly.
 #' @export
-install_backend <- function(envname = "r-trendspull", method = "auto") {
+install_backend <- function(envname = "r-trendspull", method = "auto", python = NULL) {
   method <- match.arg(method, c("auto", "virtualenv", "conda"))
   if (reticulate::py_available(initialize = FALSE)) {
     stop("Restart R before running install_backend().", call. = FALSE)
+  }
+  if (nzchar(Sys.getenv("RETICULATE_PYTHON"))) {
+    stop("Unset RETICULATE_PYTHON before setup, or use its existing environment directly.", call. = FALSE)
+  }
+  conda <- method == "conda" || (method == "auto" && .Platform$OS.type == "windows")
+  if (conda && !is.null(python)) stop("python is only used with method = 'virtualenv'.", call. = FALSE)
+  if (!conda && !reticulate::virtualenv_exists(envname)) {
+    if (is.null(python)) {
+      available <- unname(Sys.which(c("python3", "python")))
+      python <- if (any(nzchar(available))) available[nzchar(available)][1] else NULL
+    }
+    reticulate::virtualenv_create(envname, python = python)
   }
   reticulate::py_install(
     "git+https://github.com/maxwellkonnaris/googletrends.git@d71efd0769107800697ad2585751b0f736b05fee",
     envname = envname, method = method, pip = TRUE
   )
-  if (method == "conda" || (method == "auto" && .Platform$OS.type == "windows")) {
+  if (conda) {
     reticulate::use_condaenv(envname, required = TRUE)
   } else {
     reticulate::use_virtualenv(envname, required = TRUE)
