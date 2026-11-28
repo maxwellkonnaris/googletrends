@@ -72,6 +72,28 @@ def test_session_closed_if_warmup_interrupted(monkeypatch):
     session.close.assert_called_once()
 
 
+@pytest.mark.parametrize("initial_geo, geo", [("US-CA", "US-CA"), ("US-CA", "GB"), ("US-CA", "")])
+def test_warmup_and_rate_limit_recovery_use_current_geography(monkeypatch, initial_geo, geo):
+    definition = dict(keywords=[dict(keyword="smoke")],
+                      widgets=[dict(id="TIMESERIES", token="token", request=dict(resolution="WEEK"))])
+    responses = [SimpleNamespace(status_code=200), SimpleNamespace(status_code=429, reason="rate limit"),
+                 SimpleNamespace(status_code=200),
+                 SimpleNamespace(status_code=200, text=json.dumps(definition)),
+                 SimpleNamespace(status_code=200, text=response())]
+    session = SimpleNamespace(headers={}, get=Mock(side_effect=responses), cookies=Mock(), close=Mock())
+    monkeypatch.setattr(module.requests, "Session", lambda: session)
+    client = module._TrendsClient("en-US", 2, 12, geo=initial_geo)
+    client.timeline(["smoke"], geo, "2021-01-01", "2021-12-31", 0, "web")
+    calls = session.get.call_args_list
+    assert calls[0].kwargs["params"] == {"geo": initial_geo}
+    assert calls[2].kwargs["params"] == {"geo": geo}
+    assert all(json.loads(calls[i].kwargs["params"]["req"])["comparisonItem"][0]["geo"] == geo
+               for i in (1, 3))
+    session.cookies.clear.assert_called_once()
+    client.close()
+    session.close.assert_called_once()
+
+
 def test_hourly_timestamps_are_not_collapsed_to_dates():
     rows = module._timeline(response(step=3600), ["wildfire"])
     assert len({row["date"] for row in rows}) == 3

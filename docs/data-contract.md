@@ -19,7 +19,9 @@ scales. Request IDs therefore identify the comparison boundaries in CSV exports.
 
 Google scales the highest search-interest point across the compared keywords and
 periods to 100. The other values retain their relative scale within that comparison;
-they are neither absolute search counts nor percentages of all searches. Sampling,
+they estimate rescaled shares of all searches, not absolute search counts or actual
+percentages. The unknown rescaling prevents interpreting an index of 50 as 50%
+of all searches. Sampling,
 rounding and low-volume suppression limit precision, especially for rare keywords
 compared with very popular ones. See [Google's explanation](https://newsinitiative.withgoogle.com/resources/trainings/google-trends/basics-of-google-trends/).
 With `calibration="none"`, more than five keywords raises ValueError before network
@@ -90,12 +92,38 @@ intervals. They omit sampling variation, privacy suppression and query instabili
 Known partial, unavailable and low-volume rows retain their raw/derived values but
 have missing bounds. Zeros still do not establish zero population search interest.
 
+Repeat identical pulls in downstream work to assess sampling variability, keeping
+runs separate rather than concatenating their independently scaled observations.
+Repeated retrievals do not quantify all error sources or recover absolute counts.
+
 A disconnected bank fails with RuntimeError and no partial table. This can happen
 for empty/all-zero series, very different popularity levels or absent usable peaks.
 Optional intermediate-popularity anchors or a different candidate ordering may
 connect the bank; calibration cannot recover information absent from Google's data.
 Paths, source chart IDs, peak ratios, factors and bounds are recorded under
 `data.attrs["trendspull"]["calibration"]["geographies"]` and in optional manifests.
+
+## Data access and official API
+
+This implementation uses undocumented Google Trends website endpoints and a
+browser-like user agent. Website changes, blocking or rate limits can interrupt
+collection; passing offline tests does not establish current live compatibility.
+Follow Google's applicable access terms and obtain any required authorization.
+The MIT license covers this repository's software, not permission to access or
+redistribute Google's data.
+
+Google's [official Trends API alpha](https://developers.google.com/search/apis/trends)
+offers consistently scaled search-interest data across requests, a rolling window
+of approximately five years (1800 days in the announcement), and daily through
+yearly aggregation. Access remains limited to approved testers. These are Google's
+documented capabilities, not capabilities tested by this package. See the
+[official announcement](https://developers.google.com/search/blog/2025/07/trends-api).
+
+With authorized API access and validation of its scaling and schema, an API
+backend could replace website batching and G-TAB calibration for supported data.
+Consistent scaling still does not provide absolute search counts or eliminate
+sampling uncertainty. No API backend or automatic fallback is implemented, and
+no alpha-access application is submitted by this package.
 
 ## Optional time spacing
 
@@ -176,7 +204,11 @@ not resume that archive. No files are created unless archive is supplied.
 
 Agree the output schema and verify any claimed reference study's acquisition protocol;
 compare a bounded live pull with an equivalent Google export; check Python/R roundtrips;
-run installed-wheel tests across supported Python/dependency versions; choose a license.
+run installed-wheel tests across supported Python/dependency versions; review live
+access requirements. The code and documentation are licensed under MIT (see
+[LICENSE](../LICENSE)); this does not license Google data or endorse a statistical
+analysis. Installation examples pin a development commit; review and tag a version
+only after agreeing the behavior and output schema.
 These are release criteria, not claims already established by passing unit tests.
 No PyPI upload or release is authorized by this development work.
 

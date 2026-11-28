@@ -4,7 +4,7 @@ output: html_document
 ---
 
 R calls the same Python collector through `reticulate`. The result is a regular
-`data.frame`; no CSV transfer is required. Python 3.9+ is required.
+`data.frame`; no CSV transfer is required. Python 3.11+ is required.
 
 Install once, in a fresh R session (Linux/macOS virtualenv setup):
 
