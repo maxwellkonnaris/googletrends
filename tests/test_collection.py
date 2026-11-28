@@ -11,8 +11,8 @@ from trendspull import pull_trends
 from conftest import response
 
 
-def test_one_public_function():
-    assert trendspull.__all__ == ["pull_trends"]
+def test_public_functions():
+    assert trendspull.__all__ == ["pull_trends", "selected_proportions"]
 
 
 def test_installed_version_matches_metadata():

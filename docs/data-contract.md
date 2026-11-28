@@ -103,6 +103,32 @@ connect the bank; calibration cannot recover information absent from Google's da
 Paths, source chart IDs, peak ratios, factors and bounds are recorded under
 `data.attrs["trendspull"]["calibration"]["geographies"]` and in optional manifests.
 
+## Selected-term proportions helper
+
+`selected_proportions(data)` optionally transforms the original `pull_trends`
+DataFrame into a new terms-by-dates pandas DataFrame. Each column sums to 1 across
+the terms supplied in `data`. Term rows retain their first-appearance order; UTC
+date columns are sorted. This changes the denominator to the selected terms;
+the result is not percentages of all searches or a partition of distinct people.
+
+G-TAB output uses `calibrated_value`; a raw comparison uses `value`. The helper
+checks the collection metadata and request IDs to reject mixed calls or raw
+comparison scales. Select one geography before calling it, for example
+`selected_proportions(data.loc[data.geo.eq("US-CA")])`. Keep the original Python
+object with its attrs: CSV exports and automatic R conversion can lose provenance.
+From R, call the helper before converting the Python result, as shown in
+[R usage](r-usage.Rmd).
+
+The helper rejects empty data, missing/duplicate cells, nonfinite or negative
+values and dates whose selected-term total is zero. It keeps individual zeros
+and does not filter partial, unavailable or low-volume rows; inspect those flags
+in the original table. No interpolation, pseudocount, averaging or network request
+is performed. The original data and metadata are unchanged. A per-column maximum
+is divided out before summing to avoid numerical overflow; this factor cancels
+from the proportions. Output attrs record the denominator, source value column,
+geography, selected terms and request IDs. They do not provide uncertainty bounds
+for the transformed proportions or establish temporal independence.
+
 ## Data access and official API
 
 This implementation uses undocumented Google Trends website endpoints and a

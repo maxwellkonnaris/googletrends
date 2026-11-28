@@ -74,6 +74,11 @@ result <- trends_raw$pull_trends(c("wildfire","smoke"),"2021-01-01","2021-12-31"
 metadata <- py_to_r(result$attrs$get("trendspull"))
 stopifnot(metadata$settings$min_gap_days==28L, metadata$requests[[1]]$provider_row_count==18L,
           metadata$requests[[1]]$row_count==6L)
+proportions <- as.matrix(py_to_r(trends_raw$selected_proportions(result)))
+stopifnot(identical(dim(proportions),c(2L,3L)),
+          identical(rownames(proportions),c("wildfire","smoke")),
+          isTRUE(all.equal(as.numeric(colSums(proportions)),rep(1,3))),
+          isTRUE(all.equal(as.numeric(proportions[1,]),c(100/120,60/76,20/32))))
 cat("R direct call OK: data.frame, UTC instants, shared scale, spacing and flags\\n")'''
     result = subprocess.run([rscript, "--vanilla", "-e", script, setup, "unknown" if unknown_flags else "known"],
                             env=env, capture_output=True, text=True, timeout=60)

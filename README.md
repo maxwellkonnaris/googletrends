@@ -11,30 +11,38 @@ interest across all terms and dates, not each term's own peak.*
 Python 3.11+ · [MIT license](LICENSE). Development snapshot; no release has been tagged.
 
 ```bash
-python -m pip install "git+https://github.com/maxwellkonnaris/googletrends.git@e9d64843d31b21d7c1ec763e863279a60a2e8988"
+python -m pip install "git+https://github.com/maxwellkonnaris/googletrends.git@4cb6a7fef7055e2be7eff017aeb1c53deb1376b1"
 ```
 
 ## Pull
 
 ```python
-from trendspull import pull_trends
+from trendspull import pull_trends, selected_proportions
 
+# Step 1: Collect the data, preserving raw and calibrated values.
 data = pull_trends(
     ["wildfire", "smoke", "air quality", "asthma", "inhaler", "cough"],
     start="2021-01-01", end="2025-12-31", geo="US-CA",
     min_gap_days=None,  # Keep all dates; use e.g. 28 to space them.
 )
-data[["date", "keyword", "calibrated_value"]].head()
-data.to_csv("trends.csv", index=False)
+
+# Step 2: Transform to a terms × weeks matrix; each column sums to 1.
+proportions = selected_proportions(data)
+proportions.iloc[:, :3]
 ```
 
-Returns a pandas DataFrame: one row per date, term and region. Up to five terms
+`pull_trends` returns a pandas DataFrame: one row per date, term and region. Up to five terms
 share Google's 0–100 scale; larger sets automatically use G-TAB calibration
 ([West, 2020](https://doi.org/10.1145/3340531.3412075)).
 `value` preserves the raw index; `calibrated_value` is relative to the first term's
 peak (1), so other terms can exceed 1.
 Values describe relative search interest, not counts or disease incidence.
 Date spacing does not guarantee independence. See [options and output](docs/data-contract.md).
+
+`selected_proportions(data)` returns a separate pandas DataFrame: terms as rows,
+dates as columns, normalized among the supplied terms. It uses calibrated values
+when applicable, otherwise the shared raw scale. The collected `data` is unchanged.
+Use the original object with its metadata and select one geography at a time.
 
 This collector uses undocumented Google Trends website endpoints, which can change
 or stop working. Google's [official API alpha](https://developers.google.com/search/apis/trends)
@@ -88,7 +96,7 @@ calibration does not recover absolute search counts.
 ### Example table
 
 **Rows are terms; columns are weeks.** The full California example has **6 × 262**
-values. Below are three weeks from that pull, rounded for display. The package
+values. Below are three weeks from that pull, rounded for display. `pull_trends`
 returns a long DataFrame; pivoting changes its layout without changing its values.
 
 **1. Calibrated matrix — the package's `calibrated_value` output**
@@ -126,7 +134,7 @@ it is not another calibration step or an additional package output.
 **3. Optional selected-term proportions — a different denominator each week**
 
 ```python
-selected_proportions = interest.div(interest.sum(axis=0), axis=1)
+proportions = selected_proportions(data)
 ```
 
 | Term | 2021-01-03 | 2021-01-10 | 2021-01-17 |
@@ -146,8 +154,9 @@ the selected terms changes the result. Even an unchanged term's proportion can
 fall if another term increases.
 
 Use `interest` for the comparable search-interest matrix obtained from the package.
-Use `selected_proportions` only when the question concerns the distribution of
-interest among your chosen terms. The package does not perform that normalization.
+Call the optional `selected_proportions(data)` helper only when the question concerns
+the distribution of interest among your chosen terms. Collection does not normalize
+across terms automatically.
 Fresh pulls may differ.
 
 ### References
