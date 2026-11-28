@@ -11,7 +11,7 @@ Install once, in a fresh R session (Linux/macOS virtualenv setup):
 ```{r install, eval=FALSE}
 install.packages("reticulate")
 reticulate::py_install(
-  "git+https://github.com/maxwellkonnaris/googletrends.git@e9d64843d31b21d7c1ec763e863279a60a2e8988",
+  "git+https://github.com/maxwellkonnaris/googletrends.git@4cb6a7fef7055e2be7eff017aeb1c53deb1376b1",
   envname = "r-trendspull", method = "virtualenv", pip = TRUE
 )
 ```

@@ -11,7 +11,7 @@ interest across all terms and dates, not each term's own peak.*
 Python 3.11+ · [MIT license](LICENSE). Development snapshot; no release has been tagged.
 
 ```bash
-python -m pip install "git+https://github.com/maxwellkonnaris/googletrends.git@e9d64843d31b21d7c1ec763e863279a60a2e8988"
+python -m pip install "git+https://github.com/maxwellkonnaris/googletrends.git@4cb6a7fef7055e2be7eff017aeb1c53deb1376b1"
 ```
 
 ## Pull
