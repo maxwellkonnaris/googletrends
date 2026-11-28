@@ -60,8 +60,9 @@ def _timeline(text, keywords):
 
 
 class _TrendsClient:
-    def __init__(self, language, max_attempts, timeout):
+    def __init__(self, language, max_attempts, timeout, geo=""):
         self.language, self.max_attempts, self.timeout = language, max_attempts, timeout
+        self.geo = geo
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
@@ -77,7 +78,7 @@ class _TrendsClient:
 
     def _warm(self):
         try:
-            self.session.get(f"{_BASE}/explore?geo=US", timeout=self.timeout)
+            self.session.get(f"{_BASE}/explore", params=dict(geo=self.geo), timeout=self.timeout)
         except requests.RequestException:
             pass
 
@@ -102,6 +103,7 @@ class _TrendsClient:
         raise RuntimeError(f"Google request failed after {self.max_attempts} attempts: HTTP {status}, {reason}")
 
     def timeline(self, keywords, geo, start, end, category, search_type):
+        self.geo = geo
         req = dict(comparisonItem=[dict(keyword=k, geo=geo, time=f"{start} {end}") for k in keywords],
                    category=category, property=_SEARCH_TYPES[search_type])
         explore = self._fetch(f"{_BASE}/api/explore", dict(hl=self.language, tz=0, req=json.dumps(req)))

@@ -213,7 +213,7 @@ def pull_trends(
         raise ValueError("calibration must be 'auto', 'none' or 'gtab'")
     calibrated = calibration == "gtab" or (calibration == "auto" and len(keywords) > 5)
     if not calibrated and len(keywords) > 5:
-        raise ValueError("Google Trends comparisons support at most 5 keywords without G-TAB calibration")
+        raise ValueError("This collector supports at most 5 keywords without G-TAB calibration")
     bridges = [] if anchors is None else _strings(anchors, "anchors")
     if not calibrated and (reference is not None or anchors is not None):
         raise ValueError("reference and anchors require G-TAB; set calibration='gtab'")
@@ -252,7 +252,7 @@ def pull_trends(
         _atomic(run_dir / "manifest.json", manifest)
     records, client, current = [], None, None
     try:
-        client = _TrendsClient(language, max_attempts, timeout)
+        client = _TrendsClient(language, max_attempts, timeout, geo=geos[0])
         def fetch(group, region):
             nonlocal current
             if len(manifest["requests"]) >= max_comparisons:

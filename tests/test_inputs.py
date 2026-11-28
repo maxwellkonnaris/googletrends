@@ -50,5 +50,5 @@ def test_parameters_reach_client_unchanged(fake_client):
     factory, client = fake_client
     pull_trends("smoke", "2021-01-01", "2021-12-31", geo="US-CA", search_type="news", category=45,
                 language="fr-FR", timeout=12, max_attempts=2)
-    factory.assert_called_once_with("fr-FR", 2, 12)
+    factory.assert_called_once_with("fr-FR", 2, 12, geo="US-CA")
     client.timeline.assert_called_once_with(["smoke"], "US-CA", "2021-01-01", "2021-12-31", 45, "news")
