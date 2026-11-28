@@ -1,4 +1,4 @@
-# Collection contract — development draft
+# Collection contract
 
 The package collects interest over time with fixed dates, all categories and web
 search unless the caller changes those options. Up to five keywords are requested
@@ -115,9 +115,9 @@ G-TAB output uses `calibrated_value`; a raw comparison uses `value`. The helper
 checks the collection metadata and request IDs to reject mixed calls or raw
 comparison scales. Select one geography before calling it, for example
 `selected_proportions(data.loc[data.geo.eq("US-CA")])`. Keep the original Python
-object with its attrs: CSV exports and automatic R conversion can lose provenance.
-From R, call the helper before converting the Python result, as shown in
-[R usage](r-usage.Rmd).
+object with its attrs, or the native R data.frame with its `trendspull` attribute.
+CSV exports lose this metadata; use pickle or RDS to retain the complete object.
+See [R usage](r-usage.Rmd).
 
 The helper rejects empty data, missing/duplicate cells, nonfinite or negative
 values and dates whose selected-term total is zero. It keeps individual zeros
@@ -133,7 +133,7 @@ for the transformed proportions or establish temporal independence.
 
 `plot_trends(data, ncol=3)` returns a Matplotlib Figure in Python (requires the
 optional `plot` extra). The R package returns a ggplot/patchwork object with the
-same overview-plus-term-panels layout. Both use the same validated plotting table.
+same overview-plus-term-panels layout and validation rules.
 Select one geography from one collection and retain its metadata, as for
 `selected_proportions`.
 
@@ -202,7 +202,7 @@ cannot be determined from the request settings alone. Assess dependence in the
 downstream analysis; the collector neither estimates autocorrelation nor chooses a gap.
 See [NIST's autocorrelation reference](https://www.itl.nist.gov/div898/handbook/eda/section3/eda35c.htm).
 
-## Current draft table
+## Output table
 
 | Fields | Type and meaning |
 |---|---|
@@ -224,10 +224,9 @@ row counts are in `data.attrs["trendspull"]` and the optional archive manifest.
 CSV preserves the columns but not pandas attrs; an archive preserves full metadata.
 The installable R package returns a regular data.frame and retains collection
 metadata automatically in `attr(data, "trendspull")`; see the [R walkthrough](r-usage.Rmd).
-Python remains the collection engine. Conversion preserves values, missing flags
-and timestamp instants. R may display times in its local timezone. Use RDS to
-preserve the data and metadata together. Direct reticulate calls outside the R
-package still require explicit copying of pandas attrs.
+The native R implementation uses the same collection and calibration rules without
+Python. R dates are POSIXct UTC; RDS preserves the data and metadata together.
+Independent retrievals remain separate Google samples, whichever language is used.
 This is an ordinary DataFrame/CSV, not a custom binary file type. The precise table
 layout and reference-study compatibility remain open for user review.
 
@@ -253,17 +252,15 @@ request settings, runtime versions and a manifest. Existing runs are never reuse
 overwritten. Collection can leave an explicitly failed archive for inspection; it does
 not resume that archive. No files are created unless archive is supplied.
 
-## Review before a release
+## Verification
 
-Agree the output schema and verify any claimed reference study's acquisition protocol;
-compare a bounded live pull with an equivalent Google export; check Python/R roundtrips;
-run installed-wheel tests across supported Python/dependency versions; review live
-access requirements. The code and documentation are licensed under MIT (see
-[LICENSE](../LICENSE)); this does not license Google data or endorse a statistical
-analysis. Installation examples pin a development commit; review and tag a version
-only after agreeing the behavior and output schema.
-These are release criteria, not claims already established by passing unit tests.
-No PyPI upload or release is authorized by this development work.
+The installed Python and R packages are tested offline on synthetic provider
+responses. Cross-language checks compare calibration values, rounding bounds,
+selected-term proportions, display scaling and anchor paths. CI checks the native
+R package on Linux, macOS and Windows. These checks establish behavior on the
+tested fixtures; website changes can still break live collection.
 
-No DVC, containers or MLflow were added: current validation uses small synthetic data
-and needs neither dataset distribution nor computational experiment tracking.
+Source, package metadata, tests, CI and documentation are tracked by Git. Data,
+notebooks, response archives and builds stay outside Git. DVC, containers and
+MLflow are not needed for the small offline fixtures. Maintainer release commands
+are in [publishing](publishing.md).

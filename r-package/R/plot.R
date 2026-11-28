@@ -11,13 +11,17 @@
 #' @return A patchwork/ggplot object. Print to display, or save with
 #'   `ggplot2::ggsave()`. Does not fetch data, modify input or write files.
 #' @importFrom rlang .data
+#' @examples
+#' \dontrun{
+#' data <- pull_trends(c("wildfire", "smoke"), "2025-01-01", "2025-12-31")
+#' figure <- plot_trends(data)
+#' print(figure)
+#' }
 #' @export
 plot_trends <- function(data, ncol = 3) {
   ncol <- .integer_option(ncol, "ncol")
   if (ncol < 1L) stop("ncol must be positive.", call. = FALSE)
-  .backend()
-  plotting <- reticulate::import("trendspull._plot", convert = FALSE)
-  values <- reticulate::py_to_r(plotting$`_plot_data`(.python_data(data)))
+  values <- .plot_data(data)
   terms <- unique(values$keyword)
   values$keyword <- factor(values$keyword, levels = terms)
   ncol <- min(ncol, length(terms))

@@ -4,15 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "trendspull"
-version = "0.1.0.dev0"
+version = "0.1.0"
 description = "Collect Google Trends timelines as a tidy pandas DataFrame"
-readme = "README.md"
+readme = "docs/python-package.md"
+authors = [{name = "Maxwell A. Konnaris", email = "maxwellkonnaris@gmail.com"}]
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
 dependencies = ["requests>=2.28", "pandas>=1.5"]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 4 - Beta",
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
 ]

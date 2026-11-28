@@ -23,3 +23,10 @@ value by the maximum over all supplied terms and dates and multiplies by 100.
 All panels share the same y-axis. Keeps supplied dates, zeros and flagged
 observations without smoothing. Inspect quality flags before interpretation.
 }
+\examples{
+\dontrun{
+data <- pull_trends(c("wildfire", "smoke"), "2025-01-01", "2025-12-31")
+figure <- plot_trends(data)
+print(figure)
+}
+}

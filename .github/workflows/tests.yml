@@ -3,7 +3,7 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
-  test:
+  python:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -15,10 +15,34 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: python -m pip install '.[test]'
+      - run: python -m pip wheel --no-deps --wheel-dir dist .
+      - run: python -m pip install 'dist/trendspull-0.1.0-py3-none-any.whl[test]'
       - run: python -m pip check
       - run: python -m pytest -q
-  r-interface:
+  native-r:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      RETICULATE_PYTHON: /python-is-not-required
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: r-package
+          extra-packages: any::rcmdcheck
+          needs: check
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          working-directory: r-package
+          args: 'c("--no-manual", "--as-cran")'
+          error-on: '"warning"'
+  parity:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -29,17 +53,12 @@ jobs:
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
-      - run: python -m pip install '.[test]'
-      - run: Rscript -e 'install.packages(c("reticulate", "ggplot2", "patchwork", "testthat", "withr"), repos=Sys.getenv("RSPM"))'
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: r-package
+      - run: python -m pip wheel --no-deps --wheel-dir dist .
+      - run: python -m pip install 'dist/trendspull-0.1.0-py3-none-any.whl[test]'
       - run: R CMD INSTALL r-package
-      - run: Rscript -e 'library(trendspull); stopifnot(!reticulate::py_available(initialize=FALSE))'
-      - run: R CMD build r-package
-      - run: R CMD check --no-manual trendspull_0.1.0.9000.tar.gz
+      - run: python -m pytest -q tests/test_native_r.py tests/test_interoperability.py
         env:
-          TRENDSPULL_REQUIRE_R: '1'
-          RETICULATE_PYTHON: ${{ steps.python.outputs.python-path }}
-          RETICULATE_USE_MANAGED_VENV: 'no'
-      - run: python -m pytest -q tests/test_r_interface.py tests/test_interoperability.py
-        env:
-          TRENDSPULL_REQUIRE_R: '1'
-          RETICULATE_PYTHON: ${{ steps.python.outputs.python-path }}
+          TRENDSPULL_REQUIRE_NATIVE_R: '1'
