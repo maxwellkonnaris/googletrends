@@ -1,5 +1,5 @@
 test_that("setup is explicit and pins the Python backend", {
-  testthat::local_envvar(RETICULATE_PYTHON = NA)
+  withr::local_envvar(RETICULATE_PYTHON = NA)
   installed <- selected <- created <- NULL
   testthat::local_mocked_bindings(
     py_available = function(initialize) FALSE,
@@ -25,7 +25,7 @@ test_that("setup refuses to change an initialized Python session", {
 })
 
 test_that("setup does not silently lose to a forced interpreter", {
-  testthat::local_envvar(RETICULATE_PYTHON = "/already/configured/python")
+  withr::local_envvar(RETICULATE_PYTHON = "/already/configured/python")
   testthat::local_mocked_bindings(py_available = function(initialize) FALSE, .package = "reticulate")
   expect_error(install_backend(), "Unset RETICULATE_PYTHON")
 })

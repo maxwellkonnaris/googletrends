@@ -12,7 +12,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
 Imports: reticulate (>= 1.41), ggplot2 (>= 3.4.0), patchwork (>= 1.1.0), grid, stats, rlang
-Suggests: testthat (>= 3.2.0)
+Suggests: testthat (>= 3.2.0), withr (>= 2.5.0)
 SystemRequirements: Python (>= 3.11), Python packages pandas and requests
 URL: https://github.com/maxwellkonnaris/googletrends
 BugReports: https://github.com/maxwellkonnaris/googletrends/issues
