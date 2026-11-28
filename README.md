@@ -118,14 +118,20 @@ larger sets use G-TAB. Sampling, rounding and suppression limit precision.
 **Rows are terms; columns are weeks.** The full California example has **6 × 262**
 values. Below are three weeks from that pull, rounded for display. `pull_trends`
 returns a long DataFrame; pivoting changes its layout without changing its values.
+As in the cards, $q$ indexes terms, $n$ indexes weeks, and $S$ is the set of six
+selected terms.
 
-**1. Calibrated matrix — the package's `calibrated_value` output**
+**1. Calibrated matrix — $\widetilde I_{qn}$ (Step 6)**
+
+`interest` contains the package's `calibrated_value` output. In the cards' idealized
+notation, $\widetilde I_{qn} = k W^{\mathrm{comp}}_{qn}$: each term's share of all
+Google searches multiplied by the same unknown constant $k$.
 
 ```python
 interest = data.pivot(index="keyword", columns="date", values="calibrated_value")
 ```
 
-| Term | 2021-01-03 | 2021-01-10 | 2021-01-17 |
+| Term $q$ / week $n$ | 2021-01-03 | 2021-01-10 | 2021-01-17 |
 |---|---:|---:|---:|
 | wildfire | 0.0169 | 0.0169 | 0.0339 |
 | smoke | 0.6441 | 0.6102 | 0.6271 |
@@ -140,7 +146,15 @@ in `wildfire` over the full requested period. For example, smoke's 0.6441 on
 January 3 means about 64.41% of that reference peak. It is not a percentage of all
 searches or of that week's six-term total. Columns need not sum to 1.
 
-**2. Figure rescaling — different display units for the same calibrated matrix**
+**2. Figure rescaling — the same $\widetilde I_{qn}$ in display units**
+
+Every cell is multiplied by one common factor:
+
+$$
+\frac{100}{\max_{d \in S,\,m}\widetilde I_{dm}}\,\widetilde I_{qn}.
+$$
+
+Here $d$ and $m$ range over all selected terms and weeks.
 
 ```python
 plot_interest = 100 * interest / interest.to_numpy().max()
@@ -151,13 +165,21 @@ For this pull it multiplies every cell by 59: smoke's 0.644068 becomes 38.0.
 Every term/date ratio is preserved. This is only how the README figure is displayed;
 it is not another calibration step or an additional package output.
 
-**3. Optional selected-term proportions — a different denominator each week**
+**3. Optional selected-term proportions — $P_{qn}$ (Steps 4–5)**
+
+`proportions` contains the selected-term composition:
+
+$$
+P_{qn} = \frac{\widetilde I_{qn}}{\sum_{d \in S}\widetilde I_{dn}}.
+$$
+
+This is the cards' $P_{qn}$, computed from calibrated values; the common $k$ cancels.
 
 ```python
 proportions = selected_proportions(data)
 ```
 
-| Term | 2021-01-03 | 2021-01-10 | 2021-01-17 |
+| Term $q$ / week $n$ | 2021-01-03 | 2021-01-10 | 2021-01-17 |
 |---|---:|---:|---:|
 | wildfire | 0.0157 | 0.0165 | 0.0324 |
 | smoke | 0.5961 | 0.5939 | 0.5993 |
@@ -173,9 +195,10 @@ sum to 1 **among the six selected terms**, not among all Google searches; changi
 the selected terms changes the result. Even an unchanged term's proportion can
 fall if another term increases.
 
-Use `interest` for the comparable search-interest matrix obtained from the package.
+Use `interest` ($\widetilde I_{qn}$) for the comparable search-interest matrix obtained
+from the package.
 Call the optional `selected_proportions(data)` helper only when the question concerns
-the distribution of interest among your chosen terms. Collection does not normalize
+the distribution of interest among your chosen terms ($P_{qn}$). Collection does not normalize
 across terms automatically.
 Fresh pulls may differ.
 
