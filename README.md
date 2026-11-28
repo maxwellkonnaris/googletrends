@@ -85,6 +85,33 @@ calibration does not recover absolute search counts.
   <img src="docs/figures/search-counts/step-5.png" width="820" alt="Step 5. G-TAB calibration: I~_qn = k W^comp_qn, with one constant k shared by every query and week.">
 </picture>
 
+### Example table
+
+Actual California data for the week labeled **2021-01-03**, rounded for display.
+`calibrated_value` is returned by `pull_trends`. The last column is an optional
+calculation: each value divided by that week's total across the six selected terms.
+
+| `keyword` | `calibrated_value` (returned) | Selected-term proportion (derived) |
+|---|---:|---:|
+| wildfire | 0.016949 | 0.0157 |
+| smoke | 0.644068 | 0.5961 |
+| air quality | 0.050847 | 0.0471 |
+| asthma | 0.082983 | 0.0768 |
+| inhaler | 0.041492 | 0.0384 |
+| cough | 0.244068 | 0.2259 |
+
+To arrange all dates as matrices and obtain those within-selected-term proportions:
+
+```python
+interest = data.pivot(index="keyword", columns="date", values="calibrated_value")
+relative_abundance = interest.div(interest.sum(axis=0), axis=1)
+```
+
+Each column of `relative_abundance` sums to 1 across the selected terms. These are
+not percentages of all Google searches; changing the selected terms changes the
+proportions. The package returns the original long DataFrame; this matrix view and
+normalization are optional downstream steps. Fresh pulls may differ.
+
 ### References
 
 1. Google. *FAQ about Google Trends data.* Google Trends Help. <https://support.google.com/trends/answer/4365533>
