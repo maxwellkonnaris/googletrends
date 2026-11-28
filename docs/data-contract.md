@@ -129,6 +129,32 @@ from the proportions. Output attrs record the denominator, source value column,
 geography, selected terms and request IDs. They do not provide uncertainty bounds
 for the transformed proportions or establish temporal independence.
 
+## Plotting helper
+
+`plot_trends(data, ncol=3)` returns a Matplotlib Figure in Python (requires the
+optional `plot` extra). The R package returns a ggplot/patchwork object with the
+same overview-plus-term-panels layout. Both use the same validated plotting table.
+Select one geography from one collection and retain its metadata, as for
+`selected_proportions`.
+
+For display, the helper uses `calibrated_value` for G-TAB collections and `value`
+for a single raw comparison. Every value is divided by the maximum across all
+supplied terms and dates, then multiplied by 100. All panels use this common
+0–100 scale. Passing a subset changes that maximum. The collected table remains
+unchanged; the figure is a separate object. This is the README's display
+rescaling, not a change to collection or selected-term proportions.
+
+The helper keeps every supplied date, zero and flagged observation. It does not
+smooth, interpolate values, average samples or display uncertainty bounds.
+Lines connect supplied observations, including across dates selected with a gap.
+Inspect `has_data`, `is_partial`, `low_volume` and the rounding bounds in the
+source table before interpreting the plot. It rejects missing/nonfinite/negative
+values, incomplete term/date grids, mixed scales and an entirely zero collection;
+a date with only zeros remains on the plot if another date has positive values.
+`ncol` must be a positive integer. The helper returns a plot object without writing files.
+Use `figure.savefig("trends.pdf")` in Python or
+`ggplot2::ggsave("trends.pdf", figure, width=11, height=9.5, device=grDevices::cairo_pdf)` in R.
+
 ## Data access and official API
 
 This implementation uses undocumented Google Trends website endpoints and a
@@ -196,11 +222,12 @@ See [NIST's autocorrelation reference](https://www.itl.nist.gov/div898/handbook/
 Additional run metadata, normalization scope, keyword order and per-request observation
 row counts are in `data.attrs["trendspull"]` and the optional archive manifest.
 CSV preserves the columns but not pandas attrs; an archive preserves full metadata.
-Python can also be called directly from R using reticulate, returning a regular R
-data.frame; see the [R walkthrough](r-usage.Rmd). Python remains the collection engine.
-R conversion preserves values, missing flags and timestamp instants. R may display
-times in its local timezone, and pandas attrs do not automatically become R attributes.
-Use the optional archive for complete metadata or copy attrs as shown in the walkthrough.
+The installable R package returns a regular data.frame and retains collection
+metadata automatically in `attr(data, "trendspull")`; see the [R walkthrough](r-usage.Rmd).
+Python remains the collection engine. Conversion preserves values, missing flags
+and timestamp instants. R may display times in its local timezone. Use RDS to
+preserve the data and metadata together. Direct reticulate calls outside the R
+package still require explicit copying of pandas attrs.
 This is an ordinary DataFrame/CSV, not a custom binary file type. The precise table
 layout and reference-study compatibility remain open for user review.
 

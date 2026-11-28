@@ -1,4 +1,4 @@
-Collect Google Trends data in Python or [R](docs/r-usage.Rmd).
+Collect and plot Google Trends data in Python or [R](docs/r-usage.Rmd).
 
 ![Wildfire, smoke, air quality, asthma, inhaler and cough in California. Every panel uses the same 0–100 scale.](docs/figures/data-overview.svg)
 
@@ -10,14 +10,27 @@ interest across all terms and dates, not each term's own peak.*
 
 Python 3.11+ · [MIT license](LICENSE). Development snapshot; no release has been tagged.
 
+**Python** (includes the optional plotting dependency):
+
 ```bash
-python -m pip install "git+https://github.com/maxwellkonnaris/googletrends.git@4cb6a7fef7055e2be7eff017aeb1c53deb1376b1"
+python -m pip install "trendspull[plot] @ git+https://github.com/maxwellkonnaris/googletrends.git@d71efd0769107800697ad2585751b0f736b05fee"
 ```
+
+**R** (R 4.1+, Python 3.11+ and Git; run setup in a fresh R session):
+
+```r
+install.packages("remotes")
+remotes::install_github("maxwellkonnaris/googletrends@49a2723b5d53df1d497d150af657c2c9799b2be0", subdir = "r-package")
+trendspull::install_backend()
+```
+
+The R package uses the same Python collector through reticulate. Setup installs
+the pinned backend; loading the package does not download software.
 
 ## Pull
 
 ```python
-from trendspull import pull_trends, selected_proportions
+from trendspull import pull_trends, selected_proportions, plot_trends
 
 # Step 1: Collect the data, preserving raw and calibrated values.
 data = pull_trends(
@@ -29,6 +42,25 @@ data = pull_trends(
 # Step 2: Transform to a terms × weeks matrix; each column sums to 1.
 proportions = selected_proportions(data)
 proportions.iloc[:, :3]
+
+# Plot the collected interest with the README layout and one common 0–100 scale.
+figure = plot_trends(data)
+figure.savefig("trends.pdf")
+```
+
+The same functions are available in R; `data` is a data frame, `proportions` is a
+matrix, and `figure` is a ggplot/patchwork object:
+
+```r
+library(trendspull)
+data <- pull_trends(
+  c("wildfire", "smoke", "air quality", "asthma", "inhaler", "cough"),
+  start = "2021-01-01", end = "2025-12-31", geo = "US-CA"
+)
+proportions <- selected_proportions(data)
+figure <- plot_trends(data)
+ggplot2::ggsave("trends.pdf", figure, width = 11, height = 9.5,
+                device = grDevices::cairo_pdf)
 ```
 
 `pull_trends` returns a pandas DataFrame: one row per date, term and region. Up to five terms
@@ -43,6 +75,12 @@ Date spacing does not guarantee independence. See [options and output](docs/data
 dates as columns, normalized among the supplied terms. It uses calibrated values
 when applicable, otherwise the shared raw scale. The collected `data` is unchanged.
 Use the original object with its metadata and select one geography at a time.
+
+`plot_trends(data, ncol=3)` draws the overview and one panel per term. It divides
+every raw or calibrated value by the maximum across the supplied data and
+multiplies by 100; each panel uses the same scale. It retains zeros and flagged
+observations without smoothing. It does not change `data` or calculate proportions.
+See [plotting details](docs/data-contract.md#plotting-helper).
 
 This collector uses undocumented Google Trends website endpoints, which can change
 or stop working. Google's [official API alpha](https://developers.google.com/search/apis/trends)
@@ -162,8 +200,8 @@ plot_interest = 100 * interest / interest.to_numpy().max()
 
 This uses the maximum across **all terms and all 262 weeks**, not just the preview.
 For this pull it multiplies every cell by 59: smoke's 0.644068 becomes 38.0.
-Every term/date ratio is preserved. This is only how the README figure is displayed;
-it is not another calibration step or an additional package output.
+Every term/date ratio is preserved. `plot_trends(data)` applies this display
+rescaling internally; the collected values remain unchanged.
 
 **3. Optional selected-term proportions — $P_{qn}$ (Steps 4–5)**
 

@@ -3,98 +3,79 @@ title: "Using trendspull from R"
 output: html_document
 ---
 
-R calls the same Python collector through `reticulate`. The result is a regular
-`data.frame`; no CSV transfer is required. Python 3.11+ is required.
+The R package returns data frames and matrices and draws ggplot figures. It uses
+the same Python collector and calibration code as the Python package. Requires
+R 4.1+, Python 3.11+ and Git; setup needs network access.
 
-Install once, in a fresh R session (Linux/macOS virtualenv setup):
+Install once in a fresh R session:
 
 ```{r install, eval=FALSE}
-install.packages("reticulate")
-reticulate::py_install(
-  "git+https://github.com/maxwellkonnaris/googletrends.git@4cb6a7fef7055e2be7eff017aeb1c53deb1376b1",
-  envname = "r-trendspull", method = "virtualenv", pip = TRUE
-)
+install.packages("remotes")
+remotes::install_github("maxwellkonnaris/googletrends@49a2723b5d53df1d497d150af657c2c9799b2be0", subdir = "r-package")
+trendspull::install_backend()
 ```
 
-Then select that environment and collect data:
+`install_backend()` installs the pinned Python backend in `r-trendspull` and
+selects that environment. It uses a virtual environment on Linux/macOS and Conda
+on Windows; Windows requires an available Conda installation. Loading the R
+package does not install software. Restart R before changing Python environments.
+
+In later R sessions, select the installed environment before collecting:
+
+```{r environment, eval=FALSE}
+library(trendspull)
+reticulate::use_virtualenv("r-trendspull", required = TRUE)
+# On Windows, use reticulate::use_condaenv("r-trendspull", required = TRUE).
+```
+
+An existing environment with the matching Python package can also be selected
+with `reticulate::use_python()` or `RETICULATE_PYTHON`; rerunning setup is optional.
 
 ```{r collect, eval=FALSE}
-library(reticulate)
-use_virtualenv("r-trendspull", required = TRUE)
-trends <- import("trendspull")
-
-data <- trends$pull_trends(
-  c("wildfire", "smoke"),
-  start = "2021-01-01", end = "2025-12-31", geo = "US-CA",
-  min_gap_days = 28L
+# Step 1: Collect all dates for one geography.
+data <- pull_trends(
+  c("wildfire", "smoke", "air quality", "asthma", "inhaler", "cough"),
+  start = "2021-01-01", end = "2025-12-31", geo = "US-CA"
 )
-head(data[c("date", "keyword", "value")])
+head(data[c("date", "keyword", "value", "calibrated_value")])
+
+# Step 2: Transform to terms-by-weeks proportions.
+proportions <- selected_proportions(data)
+proportions[, 1:3, drop = FALSE]
+
+# Plot the collected interest on one common 0–100 display scale.
+figure <- plot_trends(data)
+ggplot2::ggsave("trends.pdf", figure, width = 11, height = 9.5,
+                device = grDevices::cairo_pdf)
 ```
 
-More than five keywords automatically use G-TAB calibration. The same R call
-then includes `calibrated_value`, with the first term's usable period peak defined
-as 1, plus conditional rounding bounds. `value` still contains the original Google
-index. For example:
+`pull_trends()` returns a data frame with one row per date, term and geography.
+Up to five keywords share a raw Google comparison; larger sets automatically use
+G-TAB and add `calibrated_value` and conditional rounding bounds. Raw `value`,
+zeros and missing quality flags are preserved. The rounding bounds do not cover
+Google's sampling variability. See the [data contract](data-contract.md).
 
-```{r calibrated, eval=FALSE}
-data <- trends$pull_trends(
-  c("wildfire", "smoke", "air quality", "asthma", "cough", "inhaler"),
-  "2021-01-01", "2025-12-31", geo = "US-CA", min_gap_days = 28L
-)
-head(data[c("date", "keyword", "calibrated_value")])
+`selected_proportions()` returns a numeric matrix whose columns sum to 1 among
+the selected terms. `plot_trends()` returns a ggplot/patchwork object with an
+overview and individual panels; it uses one maximum across all supplied terms
+and dates for its 0–100 display scale. Neither helper changes the collected data.
+Select one geography before using either helper, for example
+`selected_proportions(data[data$geo == "US-CA", ])`.
+
+Pass `min_gap_days = 28` to keep timestamps at least 28 elapsed days apart;
+omitting it keeps every date. Spacing does not guarantee independence. Integer
+options accept whole R numbers without an `L` suffix and reject fractional values.
+Dates are POSIXct timestamps; use `format(data$date, tz = "UTC")` for UTC labels.
+
+Collection metadata are retained automatically in `attr(data, "trendspull")`.
+The helpers require that attribute. Keep it when subsetting, and use RDS to save
+the full R object:
+
+```{r save, eval=FALSE}
+saveRDS(data, "trends.rds")
+data <- readRDS("trends.rds")
 ```
 
-See the [calibration contract](data-contract.md#gtab-calibration) for anchor-bank
-failure conditions and uncertainty limits; bounds do not include sampling error.
-
-For selected-term proportions, keep the Python object until after transformation
-so that the helper can check the collection metadata:
-
-```{r proportions, eval=FALSE}
-trends_raw <- import("trendspull", convert = FALSE)
-# Step 1: Collect one geography.
-result <- trends_raw$pull_trends(
-  c("wildfire", "smoke"), "2021-01-01", "2025-12-31", geo = "US-CA"
-)
-# Step 2: Transform to a terms-by-dates matrix with column sums of 1.
-proportions <- as.matrix(py_to_r(trends_raw$selected_proportions(result)))
-```
-
-These are proportions among the selected terms, not percentages of all searches.
-The helper keeps zeros and flags in the original `result`; it does not filter them.
-
-`28L` is an R integer: this example keeps dates at least 28 elapsed days apart,
-anchored at the first timestamp Google returns. Omit `min_gap_days` to keep all
-dates. All keywords at a selected date stay together and retain their shared Google
-scale. The value 28 is illustrative; it is not a promise of zero autocorrelation
-or independence. Time-series dependence needs assessment in the later analysis.
-
-Zeros and missing quality flags are preserved. Dates are POSIXct timestamps with
-the same instants as Python's UTC timestamps. R can display them in local time;
-use `format(data$date, tz = "UTC")` when checking the UTC labels.
-
-To save the result:
-
-```{r export, eval=FALSE}
-write.csv(data, "trends.csv", row.names = FALSE, na = "")
-```
-
-For full provenance, pass `archive = "data"` to save the complete raw response and
-manifest, including dates omitted from the returned table. Alternatively, preserve
-the Python metadata in an R attribute explicitly:
-
-```{r metadata, eval=FALSE}
-trends <- import("trendspull", convert = FALSE)
-result <- trends$pull_trends(
-  c("wildfire", "smoke"), "2021-01-01", "2025-12-31", geo = "US-CA"
-)
-data <- py_to_r(result)
-attr(data, "trendspull") <- py_to_r(result$attrs$get("trendspull"))
-```
-
-If Python has already been initialized in the wrong environment, restart R before
-calling `use_virtualenv()`. Integer-only options such as `category`, `max_attempts`
-and `min_gap_days` need the R `L` suffix when supplied, for example `category = 0L`.
-The calibration options `min_anchor_peak` and `max_comparisons` also require integers.
-On Windows, install into a Conda environment with `py_install(method = "conda", ...,
-pip = TRUE)` and select it with `use_condaenv()` instead of `use_virtualenv()`.
+`write.csv()` exports the columns but loses the metadata attribute. For raw Google
+responses and checksums, pass `archive = "data"` to `pull_trends()`; each collection
+writes a new run directory, including dates omitted by `min_gap_days`.
