@@ -87,30 +87,68 @@ calibration does not recover absolute search counts.
 
 ### Example table
 
-Actual California data for the week labeled **2021-01-03**, rounded for display.
-`calibrated_value` is returned by `pull_trends`. The last column is an optional
-calculation: each value divided by that week's total across the six selected terms.
+**Rows are terms; columns are weeks.** The full California example has **6 × 262**
+values. Below are three weeks from that pull, rounded for display. The package
+returns a long DataFrame; pivoting changes its layout without changing its values.
 
-| `keyword` | `calibrated_value` (returned) | Selected-term proportion (derived) |
-|---|---:|---:|
-| wildfire | 0.016949 | 0.0157 |
-| smoke | 0.644068 | 0.5961 |
-| air quality | 0.050847 | 0.0471 |
-| asthma | 0.082983 | 0.0768 |
-| inhaler | 0.041492 | 0.0384 |
-| cough | 0.244068 | 0.2259 |
-
-To arrange all dates as matrices and obtain those within-selected-term proportions:
+**1. Calibrated matrix — the package's `calibrated_value` output**
 
 ```python
 interest = data.pivot(index="keyword", columns="date", values="calibrated_value")
-relative_abundance = interest.div(interest.sum(axis=0), axis=1)
 ```
 
-Each column of `relative_abundance` sums to 1 across the selected terms. These are
-not percentages of all Google searches; changing the selected terms changes the
-proportions. The package returns the original long DataFrame; this matrix view and
-normalization are optional downstream steps. Fresh pulls may differ.
+| Term | 2021-01-03 | 2021-01-10 | 2021-01-17 |
+|---|---:|---:|---:|
+| wildfire | 0.0169 | 0.0169 | 0.0339 |
+| smoke | 0.6441 | 0.6102 | 0.6271 |
+| air quality | 0.0508 | 0.0508 | 0.0508 |
+| asthma | 0.0830 | 0.0795 | 0.0772 |
+| inhaler | 0.0415 | 0.0461 | 0.0403 |
+| cough | 0.2441 | 0.2237 | 0.2169 |
+
+Google scales each comparison separately. G-TAB uses overlapping terms to connect
+those charts onto one reference scale. Here, 1 means the estimated peak interest
+in `wildfire` over the full requested period. For example, smoke's 0.6441 on
+January 3 means about 64.41% of that reference peak. It is not a percentage of all
+searches or of that week's six-term total. Columns need not sum to 1.
+
+**2. Figure rescaling — different display units for the same calibrated matrix**
+
+```python
+plot_interest = 100 * interest / interest.to_numpy().max()
+```
+
+This uses the maximum across **all terms and all 262 weeks**, not just the preview.
+For this pull it multiplies every cell by 59: smoke's 0.644068 becomes 38.0.
+Every term/date ratio is preserved. This is only how the README figure is displayed;
+it is not another calibration step or an additional package output.
+
+**3. Optional selected-term proportions — a different denominator each week**
+
+```python
+selected_proportions = interest.div(interest.sum(axis=0), axis=1)
+```
+
+| Term | 2021-01-03 | 2021-01-10 | 2021-01-17 |
+|---|---:|---:|---:|
+| wildfire | 0.0157 | 0.0165 | 0.0324 |
+| smoke | 0.5961 | 0.5939 | 0.5993 |
+| air quality | 0.0471 | 0.0495 | 0.0486 |
+| asthma | 0.0768 | 0.0774 | 0.0738 |
+| inhaler | 0.0384 | 0.0449 | 0.0386 |
+| cough | 0.2259 | 0.2178 | 0.2073 |
+| **Column sum** | **1.0000** | **1.0000** | **1.0000** |
+
+On January 3, the six calibrated values sum to 1.080407, so smoke's proportion is
+0.644068 / 1.080407 = 0.5961. On another week the divisor changes. These proportions
+sum to 1 **among the six selected terms**, not among all Google searches; changing
+the selected terms changes the result. Even an unchanged term's proportion can
+fall if another term increases.
+
+Use `interest` for the comparable search-interest matrix obtained from the package.
+Use `selected_proportions` only when the question concerns the distribution of
+interest among your chosen terms. The package does not perform that normalization.
+Fresh pulls may differ.
 
 ### References
 
