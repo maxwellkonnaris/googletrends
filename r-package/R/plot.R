@@ -73,7 +73,7 @@ plot_trends <- function(data, ncol = 3) {
                         expand = ggplot2::expansion(mult = c(0.015, 0.025))) +
     ggplot2::scale_y_continuous(breaks = seq(0, 100, 25), limits = c(0, 100),
                               expand = ggplot2::expansion(mult = c(0, 0.04))) +
-    ggplot2::labs(x = NULL, y = "Search interest index (0\u2013100)") +
+    ggplot2::labs(x = NULL, y = "Search interest index (0-100)") +
     ggplot2::guides(colour = ggplot2::guide_legend(nrow = legend_rows, byrow = TRUE),
                     linetype = ggplot2::guide_legend(nrow = legend_rows, byrow = TRUE)) + style
   peaks <- stats::aggregate(display_value ~ keyword, values, max)
@@ -89,7 +89,7 @@ plot_trends <- function(data, ncol = 3) {
                         expand = ggplot2::expansion(mult = c(0.015, 0.025))) +
     ggplot2::scale_y_continuous(breaks = c(0, 50, 100), limits = c(0, 100),
                               expand = ggplot2::expansion(mult = c(0, 0.04))) +
-    ggplot2::labs(x = "Date (UTC)", y = "Search interest index (0\u2013100)",
+    ggplot2::labs(x = "Date (UTC)", y = "Search interest index (0-100)",
       caption = paste("100 = highest interest across all supplied terms and dates.",
                       "All panels share one scale; values are not search counts.", sep = "\n")) +
     style + ggplot2::theme(legend.position = "none", panel.spacing.y = grid::unit(1.5, "lines"))
