@@ -1,0 +1,20 @@
+Package: trendspull
+Title: Collect and Plot Google Trends Timelines
+Version: 0.1.0.9000
+Authors@R: person("Maxwell A.", "Konnaris", role = c("aut", "cre"),
+    email = "69332438+maxwellkonnaris@users.noreply.github.com")
+Description: Collect Google Trends timelines through the shared Python
+    'trendspull' backend, retain collection metadata and quality flags, compute
+    proportions among selected terms, and plot comparable search interest.
+    Uses raw joint comparisons for up to five terms and G-TAB calibration for
+    larger sets, following West (2020) <doi:10.1145/3340531.3412075>.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: reticulate (>= 1.41), ggplot2 (>= 3.4.0), patchwork (>= 1.1.0), grid, stats, rlang
+Suggests: testthat (>= 3.2.0)
+SystemRequirements: Python (>= 3.11), Python packages pandas and requests
+URL: https://github.com/maxwellkonnaris/googletrends
+BugReports: https://github.com/maxwellkonnaris/googletrends/issues
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

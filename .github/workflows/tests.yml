@@ -30,7 +30,15 @@ jobs:
         with:
           use-public-rspm: true
       - run: python -m pip install '.[test]'
-      - run: Rscript -e 'install.packages("reticulate", repos=Sys.getenv("RSPM"))'
+      - run: Rscript -e 'install.packages(c("reticulate", "ggplot2", "patchwork", "testthat"), repos=Sys.getenv("RSPM"))'
+      - run: R CMD INSTALL r-package
+      - run: Rscript -e 'library(trendspull); stopifnot(!reticulate::py_available(initialize=FALSE))'
+      - run: R CMD build r-package
+      - run: R CMD check --no-manual trendspull_0.1.0.9000.tar.gz
+        env:
+          TRENDSPULL_REQUIRE_R: '1'
+          RETICULATE_PYTHON: ${{ steps.python.outputs.python-path }}
+          RETICULATE_USE_MANAGED_VENV: 'no'
       - run: python -m pytest -q tests/test_r_interface.py tests/test_interoperability.py
         env:
           TRENDSPULL_REQUIRE_R: '1'
