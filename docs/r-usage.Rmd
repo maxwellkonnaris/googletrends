@@ -38,6 +38,8 @@ Google's sampling variability. See the [data contract](data-contract.md).
 the selected terms. `plot_trends()` returns a ggplot/patchwork object with an
 overview and individual panels; it uses one maximum across all supplied terms
 and dates for its 0–100 display scale. Neither helper changes the collected data.
+For Unicode term labels, choose a font and export device that supports them,
+such as `device = grDevices::cairo_pdf` when Cairo is available.
 Select one geography before using either helper, for example
 `selected_proportions(data[data$geo == "US-CA", ])`.
 

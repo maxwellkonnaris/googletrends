@@ -13,14 +13,14 @@ Python 3.11+ · [MIT license](LICENSE). Registry publication is pending; these c
 **Python** (includes the optional plotting dependency):
 
 ```bash
-python -m pip install "trendspull[plot] @ git+https://github.com/maxwellkonnaris/googletrends.git@92c5c2820dca168549a77b37b9d60ac08acecee6"
+python -m pip install "trendspull[plot] @ git+https://github.com/maxwellkonnaris/googletrends.git@4cbb2d3862e15dd991f6c615a020272624a9838d"
 ```
 
 **R** (R 4.1+ and Git):
 
 ```r
 install.packages("remotes")
-remotes::install_github("maxwellkonnaris/googletrends@92c5c2820dca168549a77b37b9d60ac08acecee6", subdir = "r-package")
+remotes::install_github("maxwellkonnaris/googletrends@4cbb2d3862e15dd991f6c615a020272624a9838d", subdir = "r-package")
 ```
 
 The R package runs natively without Python. Both packages use the same
