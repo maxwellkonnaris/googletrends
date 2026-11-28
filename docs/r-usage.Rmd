@@ -11,7 +11,7 @@ Install once in a fresh R session:
 
 ```{r install, eval=FALSE}
 install.packages("remotes")
-remotes::install_github("maxwellkonnaris/googletrends@49a2723b5d53df1d497d150af657c2c9799b2be0", subdir = "r-package")
+remotes::install_github("maxwellkonnaris/googletrends@893b6d66f6fafcf88fad67316cc2e0b9cbb56466", subdir = "r-package")
 trendspull::install_backend()
 ```
 
@@ -19,6 +19,9 @@ trendspull::install_backend()
 selects that environment. It uses a virtual environment on Linux/macOS and Conda
 on Windows; Windows requires an available Conda installation. Loading the R
 package does not install software. Restart R before changing Python environments.
+If the Python on PATH lacks venv/pip support, choose a suitable interpreter with
+`install_backend(method = "virtualenv", python = "/path/to/python3")`.
+Unset `RETICULATE_PYTHON` before setup if it forces a different environment.
 
 In later R sessions, select the installed environment before collecting:
 

@@ -20,7 +20,7 @@ python -m pip install "trendspull[plot] @ git+https://github.com/maxwellkonnaris
 
 ```r
 install.packages("remotes")
-remotes::install_github("maxwellkonnaris/googletrends@49a2723b5d53df1d497d150af657c2c9799b2be0", subdir = "r-package")
+remotes::install_github("maxwellkonnaris/googletrends@893b6d66f6fafcf88fad67316cc2e0b9cbb56466", subdir = "r-package")
 trendspull::install_backend()
 ```
 
