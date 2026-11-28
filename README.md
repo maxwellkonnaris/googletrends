@@ -51,46 +51,66 @@ limited access. It is not implemented here; with access, it could replace the
 website comparisons and their calibration. Both sources measure search interest,
 not absolute counts. See [data access](docs/data-contract.md#data-access-and-official-api).
 
-## From Google search counts to calibrated interest
+## What Google Trends data identify
 
-An illustration of what Google rescales and what G-TAB calibration recovers.
-Here the system includes all Google queries; selected terms are a subset of that
-full composition. Normalizing only the selected terms defines a different,
-within-subset composition.
+Search counts can be written as a share of all Google searches times the week's total.
+The cards below write Google's transformation as a known function, decompose each count
+into returned data and unknown numbers, and show which quantities the data identify:
+the composition of the selected terms is recovered, but no total is.
+The example uses made-up numbers for two terms and two weeks and ignores rounding.
 
 The shared scale applies within one geography and one `pull_trends` call with
 fixed request settings. Up to five terms use one raw Google comparison by default;
-larger sets use G-TAB. Sampling, rounding and suppression limit precision, and
-calibration does not recover absolute search counts.
+larger sets use G-TAB. Sampling, rounding and suppression limit precision.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/search-counts/legend-dark.png">
-  <img src="docs/figures/search-counts/legend.png" width="820" alt="Color key: blue = measured or estimated from data; red = not identified from data; uncolored = definitions and constants.">
+  <img src="docs/figures/search-counts/legend.png" width="820" alt="Color key: blue = identified from Google Trends data; red = not identified; uncolored = constants and definitions.">
 </picture>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/search-counts/step-1-dark.png">
-  <img src="docs/figures/search-counts/step-1.png" width="820" alt="Step 1. Absolute abundance: W_qn, the true number of searches for query q in week n (not reported by Google).">
+  <img src="docs/figures/search-counts/step-1.png" width="820" alt="Step 1. Absolute abundance equals proportion times total, with all Google searches as the system: W_qn = W^comp_qn x W^tot_n. Wildfire 1% x 10,000 = 100 and 2% x 20,000 = 400; smoke 3% x 10,000 = 300 and 2% x 20,000 = 400. None of these is reported.">
 </picture>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/search-counts/step-2-dark.png">
-  <img src="docs/figures/search-counts/step-2.png" width="820" alt="Step 2. Scale: W^tot_n, total Google searches in week n, summed over all queries (not reported).">
+  <img src="docs/figures/search-counts/step-2.png" width="820" alt="Step 2. What Google computes: I_qn = (100 / m_r) x W^comp_qn, where m_r is the largest share across all terms and dates in the request (3%). Wildfire 33.3 and 66.7; smoke 100 and 66.7.">
 </picture>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/search-counts/step-3-dark.png">
-  <img src="docs/figures/search-counts/step-3.png" width="820" alt="Step 3. Relative abundance: W^comp_qn = W_qn / W^tot_n, each query's share of all searches.">
+  <img src="docs/figures/search-counts/step-3.png" width="820" alt="Step 3. Inverting Google's function: W_qn = I_qn x theta_n, with theta_n = m_r x W^tot_n / 100 searches per index point (3 in week 1, 6 in week 2).">
 </picture>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/search-counts/step-4-dark.png">
-  <img src="docs/figures/search-counts/step-4.png" width="820" alt="Step 4. Google Trends index: I^(r)_qn = s_r W^comp_qn, the share rescaled to 0 to 100 within request r.">
+  <img src="docs/figures/search-counts/step-4.png" width="820" alt="Step 4. Three-part decomposition: W_qn = P_qn x S_n x W^tot_n, where P_qn = I_qn / sum of I over selected terms is returned and S_n = (m_r/100) x sum of I is not.">
 </picture>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/search-counts/step-5-dark.png">
-  <img src="docs/figures/search-counts/step-5.png" width="820" alt="Step 5. G-TAB calibration: I~_qn = k W^comp_qn, with one constant k shared by every query and week.">
+  <img src="docs/figures/search-counts/step-5.png" width="820" alt="Step 5. Selected-term composition and total: with the selected terms as the system, W_qn = P_qn x T_n. The composition P_qn (25%/75%, 50%/50%) is identified; the total T_n (400, 800) is not. This mirrors microbiome sequencing.">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/search-counts/step-6-dark.png">
+  <img src="docs/figures/search-counts/step-6.png" width="820" alt="Step 6. With G-TAB calibration: request A (wildfire, smoke) and request B (smoke, cough) are scaled separately; smoke peaks at 100 in A and 50 in B, so B is multiplied by 2 to match A, then all values are divided by wildfire's peak (66.7) so the reference peak is 1. Calibrated values equal k times shares of all searches, with k = 50.">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/search-counts/step-7-dark.png">
+  <img src="docs/figures/search-counts/step-7.png" width="820" alt="Step 7. What the data identify: the selected-term composition and ratios of shares need nothing extra; shares of all searches need one number (m_r); the selected-term total and search counts need one number per week (theta_n); all Google searches are not in the data.">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/search-counts/step-8-dark.png">
+  <img src="docs/figures/search-counts/step-8.png" width="820" alt="Step 8. Why only these are identified: two worlds with different counts and totals (World A: 100/300 and 400/400 with totals 10,000 and 20,000; World B: 200/600 and 400/400 with totals 10,000 and 10,000) produce identical Google values.">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/search-counts/step-9-dark.png">
+  <img src="docs/figures/search-counts/step-9.png" width="820" alt="Step 9. What would recover the rest: one true share recovers all shares; weekly counts for one reference term give theta_n = W_ref,n / I_ref,n and recover all counts.">
 </picture>
 
 ### Example table
