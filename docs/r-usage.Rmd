@@ -3,36 +3,13 @@ title: "Using trendspull from R"
 output: html_document
 ---
 
-The R package returns data frames and matrices and draws ggplot figures. It uses
-the same Python collector and calibration code as the Python package. Requires
-R 4.1+, Python 3.11+ and Git; setup needs network access.
+The native R package returns data frames and matrices and draws ggplot figures.
+Requires R 4.1+; Python is not required. Install from the repository using the
+instructions in the [README](../README.md#install), then load the package:
 
-Install once in a fresh R session:
-
-```{r install, eval=FALSE}
-install.packages("remotes")
-remotes::install_github("maxwellkonnaris/googletrends@905ffedce4beee87c06f63fa396acbc378c6d6c3", subdir = "r-package")
-trendspull::install_backend()
-```
-
-`install_backend()` installs the pinned Python backend in `r-trendspull` and
-selects that environment. It uses a virtual environment on Linux/macOS and Conda
-on Windows; Windows requires an available Conda installation. Loading the R
-package does not install software. Restart R before changing Python environments.
-If the Python on PATH lacks venv/pip support, choose a suitable interpreter with
-`install_backend(method = "virtualenv", python = "/path/to/python3")`.
-Unset `RETICULATE_PYTHON` before setup if it forces a different environment.
-
-In later R sessions, select the installed environment before collecting:
-
-```{r environment, eval=FALSE}
+```{r library}
 library(trendspull)
-reticulate::use_virtualenv("r-trendspull", required = TRUE)
-# On Windows, use reticulate::use_condaenv("r-trendspull", required = TRUE).
 ```
-
-An existing environment with the matching Python package can also be selected
-with `reticulate::use_python()` or `RETICULATE_PYTHON`; rerunning setup is optional.
 
 ```{r collect, eval=FALSE}
 # Step 1: Collect all dates for one geography.
@@ -48,8 +25,7 @@ proportions[, 1:3, drop = FALSE]
 
 # Plot the collected interest on one common 0–100 display scale.
 figure <- plot_trends(data)
-ggplot2::ggsave("trends.pdf", figure, width = 11, height = 9.5,
-                device = grDevices::cairo_pdf)
+ggplot2::ggsave("trends.pdf", figure, width = 11, height = 9.5)
 ```
 
 `pull_trends()` returns a data frame with one row per date, term and geography.
@@ -62,6 +38,8 @@ Google's sampling variability. See the [data contract](data-contract.md).
 the selected terms. `plot_trends()` returns a ggplot/patchwork object with an
 overview and individual panels; it uses one maximum across all supplied terms
 and dates for its 0–100 display scale. Neither helper changes the collected data.
+For Unicode term labels, choose a font and export device that supports them,
+such as `device = grDevices::cairo_pdf` when Cairo is available.
 Select one geography before using either helper, for example
 `selected_proportions(data[data$geo == "US-CA", ])`.
 

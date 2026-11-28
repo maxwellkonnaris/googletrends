@@ -8,24 +8,23 @@ interest across all terms and dates, not each term's own peak.*
 
 ## Install
 
-Python 3.11+ · [MIT license](LICENSE). Development snapshot; no release has been tagged.
+Python 3.11+ · [MIT license](LICENSE). Registry publication is pending; these commands install a fixed source snapshot.
 
 **Python** (includes the optional plotting dependency):
 
 ```bash
-python -m pip install "trendspull[plot] @ git+https://github.com/maxwellkonnaris/googletrends.git@d71efd0769107800697ad2585751b0f736b05fee"
+python -m pip install "trendspull[plot] @ git+https://github.com/maxwellkonnaris/googletrends.git@4cbb2d3862e15dd991f6c615a020272624a9838d"
 ```
 
-**R** (R 4.1+, Python 3.11+ and Git; run setup in a fresh R session):
+**R** (R 4.1+ and Git):
 
 ```r
 install.packages("remotes")
-remotes::install_github("maxwellkonnaris/googletrends@905ffedce4beee87c06f63fa396acbc378c6d6c3", subdir = "r-package")
-trendspull::install_backend()
+remotes::install_github("maxwellkonnaris/googletrends@4cbb2d3862e15dd991f6c615a020272624a9838d", subdir = "r-package")
 ```
 
-The R package uses the same Python collector through reticulate. Setup installs
-the pinned backend; loading the package does not download software.
+The R package runs natively without Python. Both packages use the same
+collection and calibration rules.
 
 ## Pull
 
@@ -59,8 +58,7 @@ data <- pull_trends(
 )
 proportions <- selected_proportions(data)
 figure <- plot_trends(data)
-ggplot2::ggsave("trends.pdf", figure, width = 11, height = 9.5,
-                device = grDevices::cairo_pdf)
+ggplot2::ggsave("trends.pdf", figure, width = 11, height = 9.5)
 ```
 
 `pull_trends` returns a pandas DataFrame: one row per date, term and region. Up to five terms

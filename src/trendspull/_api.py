@@ -19,7 +19,7 @@ import requests
 from ._client import _SEARCH_TYPES, _TrendsClient, _timeline
 from ._gtab import _CALIBRATED_COLUMNS, _calibrate, _groups, _next_bridge
 
-_VERSION = "0.1.0.dev0"
+_VERSION = "0.1.0"
 _LOG = logging.getLogger(__name__)
 _COLUMNS = ["date", "keyword", "geo", "value", "formatted_value", "has_data", "is_partial", "low_volume",
             "start", "end", "category", "search_type", "language", "retrieved_at", "request_id"]

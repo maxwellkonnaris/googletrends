@@ -22,17 +22,18 @@ package, not only imports from the checkout. Use python -m pytest -q with synthe
 responses and blocked network access; test malicious/malformed inputs, empty data,
 rate limits, retries, interrupted requests, preservation and archive failure paths.
 
-The installable R interface is under r-package/. It uses the same pinned Python
-collector through reticulate and retains metadata in an R data.frame attribute.
-Both plotters use the shared validated plotting table and one global 0–100 display
+The native R package is under r-package/ and requires no Python. It implements
+the same collection and calibration rules and retains metadata in a data.frame
+attribute. Keep the two implementations consistent with shared synthetic inputs.
+Both plotters validate the collection and use one global 0–100 display
 factor, with fixed y-axis limits. Do not normalize each term's peak separately.
 Keep Python plotting optional; R returns a ggplot/patchwork object. Never install
-Python dependencies when loading the R package. Regenerate R help from roxygen
+dependencies when loading either package. Regenerate R help from roxygen
 comments and run installed-package tests plus R CMD check with network blocked
-in the synthetic collection fixtures. Do not upload to CRAN without approval.
+in the synthetic collection fixtures. The user authorized PyPI publication and CRAN submission for this release.
 
 Keep new public API/output choices provisional until the user reviews their meaning.
-Do not publish a release or upload to PyPI without explicit user approval.
+Registry credentials and maintainer email verification must remain outside Git.
 The repository is public. Use reviewable changes on codex/ branches.
 
 Git tracks source, package metadata, tests, CI and documentation. Research data,

@@ -64,7 +64,14 @@ A data.frame with one row per date, keyword and geography. Dates are
   `calibrated_value` and conditional rounding bounds; raw `value` is preserved.
 }
 \description{
-Calls the same collector as Python. Up to five terms share one raw comparison;
+Uses the same collection rules as the Python package. Up to five terms share one raw comparison;
 larger sets use G-TAB automatically. Retains zeros, provider timestamps, raw
 indices, quality flags and provenance. A failed collection raises an error.
+}
+\examples{
+\dontrun{
+data <- pull_trends(c("wildfire", "smoke"),
+                    "2025-01-01", "2025-12-31", geo = "US-CA")
+head(data)
+}
 }

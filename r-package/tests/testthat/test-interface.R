@@ -19,7 +19,7 @@ test_that("collection keeps metadata, UTC instants, zeros and missing flags", {
   expect_equal(nrow(pull_trends(c("smoke", "wildfire"), "2021-01-01", "2021-12-31", min_gap_days = 14)), 4)
 })
 
-test_that("R and Python use the same G-TAB and normalization", {
+test_that("G-TAB and proportions use the reference peak", {
   offline_backend()
   data <- pull_trends(c("smoke", "wildfire"), "2021-01-01", "2021-12-31", calibration = "gtab")
   expect_equal(data$calibrated_value, data$value / 100)
@@ -46,7 +46,7 @@ test_that("R plot has one shared scale and preserves input", {
   expect_equal(detail$scales$get_scales("y")$limits, c(0, 100))
   expect_equal(serialize(data, NULL), before)
   file <- tempfile(fileext = ".pdf")
-  ggplot2::ggsave(file, figure, width = 11, height = 7, device = grDevices::cairo_pdf)
+  ggplot2::ggsave(file, figure, width = 11, height = 7)
   expect_gt(file.info(file)$size, 1000)
 })
 
@@ -57,7 +57,7 @@ test_that("R rejects missing metadata, mixed geographies and invalid integers", 
   expect_error(plot_trends(data), "one geography")
   expect_equal(dim(selected_proportions(data[data$geo == "GB", ])), c(2, 3))
   attr(data, "trendspull") <- NULL
-  expect_error(selected_proportions(data), "retaining its trendspull attribute")
+  expect_error(selected_proportions(data), "original pull_trends metadata")
   for (bad in list(NA_real_, Inf, 2.5, TRUE, c(1, 2))) {
     expect_error(pull_trends("smoke", "2021-01-01", "2021-12-31", min_gap_days = bad), "finite integer")
   }
@@ -72,10 +72,10 @@ test_that("R keeps zeros and supports one-date plots", {
   expect_s3_class(plot_trends(one), "patchwork")
   expect_no_warning(ggplot2::ggplotGrob(plot_trends(one)[[1]]))
   data$value[] <- 0L
-  expect_error(plot_trends(data), "positive value")
+  expect_error(plot_trends(data), "entirely zero")
   expect_error(selected_proportions(data), "positive total")
   data$date <- as.Date(data$date)
-  expect_error(plot_trends(data), "POSIXct")
+  expect_error(plot_trends(data), "UTC timestamps")
 })
 
 test_that("R plots retain separate hourly timestamps", {
