@@ -8,24 +8,23 @@ interest across all terms and dates, not each term's own peak.*
 
 ## Install
 
-Python 3.11+ · [MIT license](LICENSE). Development snapshot; no release has been tagged.
+Python 3.11+ · [MIT license](LICENSE). Registry publication is pending; these commands install a fixed source snapshot.
 
 **Python** (includes the optional plotting dependency):
 
 ```bash
-python -m pip install "trendspull[plot] @ git+https://github.com/maxwellkonnaris/googletrends.git@d71efd0769107800697ad2585751b0f736b05fee"
+python -m pip install "trendspull[plot] @ git+https://github.com/maxwellkonnaris/googletrends.git@92c5c2820dca168549a77b37b9d60ac08acecee6"
 ```
 
-**R** (R 4.1+, Python 3.11+ and Git; run setup in a fresh R session):
+**R** (R 4.1+ and Git):
 
 ```r
 install.packages("remotes")
-remotes::install_github("maxwellkonnaris/googletrends@905ffedce4beee87c06f63fa396acbc378c6d6c3", subdir = "r-package")
-trendspull::install_backend()
+remotes::install_github("maxwellkonnaris/googletrends@92c5c2820dca168549a77b37b9d60ac08acecee6", subdir = "r-package")
 ```
 
-The R package uses the same Python collector through reticulate. Setup installs
-the pinned backend; loading the package does not download software.
+The R package runs natively without Python. Both packages use the same
+collection and calibration rules.
 
 ## Pull
 

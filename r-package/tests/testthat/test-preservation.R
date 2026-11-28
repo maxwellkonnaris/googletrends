@@ -55,3 +55,27 @@ test_that("helpers reject incomplete grids and mixed scales, without mutating in
   expect_equal(as.numeric(proportions), rep(.5, 6))
   expect_equal(serialize(data, NULL), before)
 })
+
+
+test_that("interruptions close the client and record failure", {
+  root <- tempfile()
+  closed <- FALSE
+  testthat::local_mocked_bindings(.new_client = function(...) list(
+    timeline = function(...) stop(structure(list(message = "interrupted"), class = c("interrupt", "condition"))),
+    close = function() closed <<- TRUE), .package = "trendspull")
+  result <- tryCatch(pull_trends("a", "2021-01-01", "2021-12-31", archive = root), interrupt = identity)
+  expect_s3_class(result, "interrupt")
+  expect_true(closed)
+  manifest <- jsonlite::fromJSON(list.files(root, "manifest.json", recursive = TRUE, full.names = TRUE))
+  expect_equal(manifest$status, "failed")
+})
+
+test_that("empty timelines retain typed columns and warn", {
+  offline_backend(provider = function(...) list(explore = "{}",
+    multiline = '{"default":{"timelineData":[]}}', resolution = "WEEK"))
+  expect_warning(data <- pull_trends("a", "2021-01-01", "2021-12-31"), "empty timeline")
+  expect_equal(nrow(data), 0)
+  expect_s3_class(data$date, "POSIXct")
+  expect_type(data$value, "integer")
+  expect_equal(attr(data, "trendspull")$requests[[1]]$status, "empty")
+})
