@@ -58,8 +58,7 @@ data <- pull_trends(
 )
 proportions <- selected_proportions(data)
 figure <- plot_trends(data)
-ggplot2::ggsave("trends.pdf", figure, width = 11, height = 9.5,
-                device = grDevices::cairo_pdf)
+ggplot2::ggsave("trends.pdf", figure, width = 11, height = 9.5)
 ```
 
 `pull_trends` returns a pandas DataFrame: one row per date, term and region. Up to five terms

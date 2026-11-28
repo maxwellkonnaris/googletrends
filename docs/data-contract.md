@@ -153,7 +153,7 @@ values, incomplete term/date grids, mixed scales and an entirely zero collection
 a date with only zeros remains on the plot if another date has positive values.
 `ncol` must be a positive integer. The helper returns a plot object without writing files.
 Use `figure.savefig("trends.pdf")` in Python or
-`ggplot2::ggsave("trends.pdf", figure, width=11, height=9.5, device=grDevices::cairo_pdf)` in R.
+`ggplot2::ggsave("trends.pdf", figure, width=11, height=9.5)` in R.
 
 ## Data access and official API
 

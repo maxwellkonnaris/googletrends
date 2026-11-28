@@ -46,7 +46,7 @@ test_that("R plot has one shared scale and preserves input", {
   expect_equal(detail$scales$get_scales("y")$limits, c(0, 100))
   expect_equal(serialize(data, NULL), before)
   file <- tempfile(fileext = ".pdf")
-  ggplot2::ggsave(file, figure, width = 11, height = 7, device = grDevices::cairo_pdf)
+  ggplot2::ggsave(file, figure, width = 11, height = 7)
   expect_gt(file.info(file)$size, 1000)
 })
 
