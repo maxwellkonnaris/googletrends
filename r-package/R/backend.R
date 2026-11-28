@@ -13,7 +13,7 @@ install_backend <- function(envname = "r-trendspull", method = "auto") {
     stop("Restart R before running install_backend().", call. = FALSE)
   }
   reticulate::py_install(
-    "git+https://github.com/maxwellkonnaris/googletrends.git@e47321a",
+    "git+https://github.com/maxwellkonnaris/googletrends.git@d71efd0769107800697ad2585751b0f736b05fee",
     envname = envname, method = method, pip = TRUE
   )
   if (method == "conda" || (method == "auto" && .Platform$OS.type == "windows")) {
