@@ -12,7 +12,7 @@ from conftest import response
 
 
 def test_public_functions():
-    assert trendspull.__all__ == ["pull_trends", "selected_proportions"]
+    assert trendspull.__all__ == ["pull_trends", "selected_proportions", "plot_trends"]
 
 
 def test_installed_version_matches_metadata():

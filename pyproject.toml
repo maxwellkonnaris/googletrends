@@ -18,7 +18,8 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7,<10"]
+plot = ["matplotlib>=3.8"]
+test = ["pytest>=7,<10", "matplotlib>=3.8"]
 
 [project.urls]
 Repository = "https://github.com/maxwellkonnaris/googletrends"

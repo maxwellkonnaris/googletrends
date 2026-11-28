@@ -5,19 +5,8 @@ import pandas as pd
 from pandas.api.types import is_bool_dtype, is_complex_dtype, is_datetime64_any_dtype, is_numeric_dtype
 
 
-def selected_proportions(data: pd.DataFrame) -> pd.DataFrame:
-    """Return selected-term proportions, with terms as rows and UTC dates as columns.
-
-    Pass the original DataFrame from one ``pull_trends`` call, retaining its attrs,
-    and select one geography first if needed. Uses ``calibrated_value`` for G-TAB
-    output and ``value`` for a single raw comparison. Each date's column sums to 1.
-    These are proportions among the supplied terms, not shares of all Google searches.
-
-    Keeps zeros and flagged observations; inspect the input quality flags separately.
-    Does not mutate input, fetch data, fill missing cells, or add pseudocounts.
-    Raises ValueError for missing provenance, mixed scales, incomplete grids,
-    nonfinite/negative values, or dates without a positive total.
-    """
+def _interest_matrix(data):
+    """Validate one collection and return its terms-by-dates matrix and value field."""
     if not isinstance(data, pd.DataFrame):
         raise TypeError("data must be the DataFrame returned by pull_trends")
     if data.empty or not data.columns.is_unique:
@@ -56,6 +45,23 @@ def selected_proportions(data: pd.DataFrame) -> pd.DataFrame:
     matrix = matrix.reindex(data.keyword.drop_duplicates()).sort_index(axis=1).astype(float)
     if matrix.isna().any().any():
         raise ValueError("Every selected term must have the same dates; missing cells are not filled")
+    return matrix, field
+
+
+def selected_proportions(data: pd.DataFrame) -> pd.DataFrame:
+    """Return selected-term proportions, with terms as rows and UTC dates as columns.
+
+    Pass the original DataFrame from one ``pull_trends`` call, retaining its attrs,
+    and select one geography first if needed. Uses ``calibrated_value`` for G-TAB
+    output and ``value`` for a single raw comparison. Each date's column sums to 1.
+    These are proportions among the supplied terms, not shares of all Google searches.
+
+    Keeps zeros and flagged observations; inspect the input quality flags separately.
+    Does not mutate input, fetch data, fill missing cells, or add pseudocounts.
+    Raises ValueError for missing provenance, mixed scales, incomplete grids,
+    nonfinite/negative values, or dates without a positive total.
+    """
+    matrix, field = _interest_matrix(data)
     peaks = matrix.max(axis=0)
     if peaks.le(0).any():
         raise ValueError("Each date must have a positive total across the selected terms")
